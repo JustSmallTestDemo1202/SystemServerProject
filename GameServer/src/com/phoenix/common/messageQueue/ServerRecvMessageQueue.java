@@ -4,6 +4,7 @@
  */
 package com.phoenix.common.messageQueue;
 
+import com.phoenix.common.message.serverRecvMessage.ServerRecvMessage;
 import java.util.concurrent.LinkedTransferQueue;
 
 /**
@@ -11,9 +12,9 @@ import java.util.concurrent.LinkedTransferQueue;
  * @author rachel
  */
 public class ServerRecvMessageQueue {
-    private static final LinkedTransferQueue<Message> messageQueue = new LinkedTransferQueue<Message>();
+    private static final LinkedTransferQueue<ServerRecvMessage> messageQueue = new LinkedTransferQueue<ServerRecvMessage>();
     
-    public static LinkedTransferQueue<Message> queue() {
+    public static LinkedTransferQueue<ServerRecvMessage> queue() {
         return messageQueue;
     }
 }
