@@ -1,0 +1,6 @@
+package phoenix;
+
+option java_package = "com.phoenix.protobuf";
+option optimize_for = SPEED;
+
+import "src/protobuf/ExternalCommonProtocol.proto";

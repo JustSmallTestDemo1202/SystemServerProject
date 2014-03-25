@@ -5,19 +5,28 @@
 package com.phoenix.server;
 
 import com.phoenix.common.database.DBThreadHandler;
+import com.phoenix.common.message.protobufMessage.ProtobufMessage;
 import com.phoenix.common.message.serverRecvMessage.ServerRecvMessage;
+import com.phoenix.common.messageQueue.DBMessageQueue;
 import com.phoenix.common.messageQueue.ServerRecvMessageQueue;
 import com.phoenix.common.network.ClientConnectHandler;
 import com.phoenix.common.network.ServerSendThreadHandler;
 import com.phoenix.common.network.channel.UninitializeChannel;
 import com.phoenix.common.network.listenerServer.ClientConnectServer;
 import com.phoenix.common.network.pipilineFactory.CommonToServerPipelineFactory;
+import com.phoenix.server.actor.Human;
+import com.phoenix.server.message.messageBuilder.DBMessageBuilder;
+import com.phoenix.server.message.messageBuilder.S2CMessageBuilder;
+import com.phoenix.server.player.MapPlayer;
+import com.phoenix.server.player.PlayerContext;
+import com.phoenix.server.player.state.NormalPlayerState;
 import com.phoenix.utils.CommonUtil;
 import com.phoenix.utils.Consts;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -66,11 +75,11 @@ public class GameServer implements Runnable {
     private ExecutorService nioExecutorService;
     
     // 以channelID作为索引玩家ID
-    public final ConcurrentHashMap<Integer, Integer> channelID2PlayerIDMap = new ConcurrentHashMap<Integer, Integer>();
+    public final ConcurrentHashMap<Integer, Integer> channelID2PlayerIDMap = new ConcurrentHashMap<>();
     // players以playerID为索引记录玩家对象（包括正在登录的玩家和已进入游戏的玩家）
-    public final HashMap<Integer, MapPlayer> players = new HashMap<Integer, MapPlayer>();
+    public final HashMap<Integer, MapPlayer> players = new HashMap<>();
     // playerContexts保存玩家上下文，key为playerId。找不到则创建玩家上下文并异步加载玩家数据
-    public final HashMap<Integer, PlayerContext> playerContexts = new HashMap<Integer, PlayerContext>();
+    public final HashMap<Integer, PlayerContext> playerContexts = new HashMap<>();
     
     // 简略玩家信息表
     //public BriefPlayerInfos briefPlayerInfos; 
@@ -272,6 +281,71 @@ public class GameServer implements Runnable {
         new Thread(this, "GameServerThread").start();
     }
     
+    // 全服广播
+    public void broadcast(ProtobufMessage message) {
+        for (MapPlayer mapPlayer : players.values()) {
+            if (mapPlayer.state == NormalPlayerState.INSTANCE) {
+                mapPlayer.channelContext.write(message);
+            }
+        }
+    }
+    
+    // 对指定玩家发送消息
+    public void broadcast(List<Integer> charIds, ProtobufMessage message, boolean needOffLineSend) {
+        for (int charId : charIds) {
+            MapPlayer mapPlayer = players.get(charId);
+            if (mapPlayer != null && mapPlayer.state == NormalPlayerState.INSTANCE) {
+                mapPlayer.channelContext.write(message);
+            } else if (needOffLineSend) {
+                //离线消息
+            }
+        }
+    }
+    
+    public void enterGame(MapPlayer player) {
+        Human human = player.human;
+        assert (human != null);
+
+        human.enterGame();
+    }
+    
+    public PlayerContext loadPlayerData(int playerId) {
+        // 载入玩家数据
+        PlayerContext playerContext = playerContexts.get(playerId);
+
+        if (playerContext == null) {
+            playerContext = new PlayerContext();
+            playerContext.lastVisitTime = getCurrentTime();
+            playerContext.player = players.get(playerId);
+
+            playerContexts.put(playerId, playerContext);
+            // 通知DB线程加载玩家数据
+            DBMessageQueue.queue().offer(DBMessageBuilder.buildGetCharDetailDBMessage(playerId));
+        } else if (playerContext.human != null) {
+            System.err.println("load player[" + playerId + "] data fail because already loaded.");
+        }
+
+        return playerContext;
+    }
+    
+    public void removePlayer(MapPlayer player) {
+        assert (player != null);
+
+        Human human = player.human;
+        if (human != null) {
+            human.leaveGame();
+        }
+
+        PlayerContext playerContext = playerContexts.get(player.getId());
+        if (playerContext != null) {
+            playerContext.lastVisitTime = getCurrentTime();
+            playerContext.player = null;
+        }
+
+        // 注意：关闭channel会触发产生CLIENTCLOSE消息处理
+        player.channelContext.close();
+    }
+    
     private void handleMessages() {
         
     }
@@ -289,7 +363,7 @@ public class GameServer implements Runnable {
                 
                 // 心跳 - 广播到客户端，客户端进行校时
                 if (realCurrTime / Consts.MILSECOND_1MINITE > realPrevTime / Consts.MILSECOND_1MINITE) {
-                    //broadcast(ServerToClientMessageBuilder.buildRealTime(realCurrTime));
+                    broadcast(S2CMessageBuilder.buildRealTime(realCurrTime));
                 }
                 
                 handleMessages();
@@ -346,5 +420,5 @@ public class GameServer implements Runnable {
         } catch (NumberFormatException e) {
             e.printStackTrace();
         }
-    }
+    }   
 }

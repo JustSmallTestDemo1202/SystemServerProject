@@ -6,6 +6,7 @@ package com.phoenix.server.player;
 
 import com.phoenix.common.message.serverRecvMessage.ServerRecvMessage;
 import com.phoenix.server.GameServer;
+import com.phoenix.server.player.state.DummyPlayerState;
 import com.phoenix.server.player.state.PlayerState;
 
 /**

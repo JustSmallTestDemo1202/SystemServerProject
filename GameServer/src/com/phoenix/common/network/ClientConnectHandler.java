@@ -5,8 +5,17 @@
 package com.phoenix.common.network;
 
 import com.google.gson.JsonSyntaxException;
+import com.phoenix.common.loginAuth.JSONLoginAuthData;
+import com.phoenix.common.loginAuth.JSONLoginAuthRetData;
+import com.phoenix.common.message.protobufMessage.ProtobufMessageType;
 import com.phoenix.common.messageQueue.ServerRecvMessageQueue;
+import com.phoenix.protobuf.ExternalCommonProtocol.CSCreateCharProto;
+import com.phoenix.protobuf.ExternalCommonProtocol.CSLoginProto;
 import com.phoenix.server.GameServer;
+import com.phoenix.server.message.messageBuilder.S2CMessageBuilder;
+import com.phoenix.server.message.messageBuilder.S2SMessageBuilder;
+import com.phoenix.utils.Consts;
+import com.phoenix.utils.JSONHelper;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -33,19 +42,20 @@ import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
  */
 @ChannelPipelineCoverage("all")
 public class ClientConnectHandler extends SimpleChannelUpstreamHandler {
+
     @Override
     public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         if (GameServer.INSTANCE.isShuttingDown()) {
             e.getChannel().close();
             return;
         }
-        ServerRecvMessageQueue.queue().offer(ServerMessageBuilder.buildClientConnectMessage(e.getChannel()));
+        ServerRecvMessageQueue.queue().offer(S2SMessageBuilder.buildClientConnectMessage(e.getChannel()));
         System.out.println("Client connected channel id = " + e.getChannel().getId());
     }
 
     @Override
     public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        ServerRecvMessageQueue.queue().offer(ServerMessageBuilder.buildClientCloseMessage(e.getChannel()));
+        ServerRecvMessageQueue.queue().offer(S2SMessageBuilder.buildClientCloseMessage(e.getChannel()));
         System.out.println("Client closed channel id = " + e.getChannel().getId());
     }
 
@@ -69,7 +79,7 @@ public class ClientConnectHandler extends SimpleChannelUpstreamHandler {
             switch (type) {
                 case ProtobufMessageType.C2S_LOGIN:
                     if (playerId == null) {
-                        LoginProto loginMsg = LoginProto.getDefaultInstance().newBuilderForType().mergeFrom(new ChannelBufferInputStream(cb)).build();
+                        CSLoginProto loginMsg = CSLoginProto.getDefaultInstance().newBuilderForType().mergeFrom(new ChannelBufferInputStream(cb)).build();
                         String loginSession = loginMsg.getLoginSession();
                         if (loginSession == null) {
                             loginFail(e.getChannel());
@@ -79,38 +89,21 @@ public class ClientConnectHandler extends SimpleChannelUpstreamHandler {
                         InetAddress inetAddress = saddr.getAddress();
                         String clientIp = inetAddress.getHostAddress();
                         JSONLoginAuthRetData loginAuthRetData = checkAccount(loginSession, clientIp);
-                        
-                        if (loginAuthRetData == null || loginAuthRetData.result != 0 || loginAuthRetData.forbiddenEndLoginTime > (ProjectCardServer.INSTANCE.getCurrentTime() / Consts.MILSECOND_1SECOND)) {
+
+                        if (loginAuthRetData == null || loginAuthRetData.result != 0 || loginAuthRetData.forbiddenEndLoginTime > (GameServer.INSTANCE.getCurrentTime() / Consts.MILSECOND_1SECOND)) {
                             System.err.println("Player[" + playerId + "] login fail for session[" + loginSession + "] result[" + loginAuthRetData.result + "].");
                             loginFail(e.getChannel());
                             return;
                         }
-                        ServerMessageQueue.queue().offer(ServerMessageBuilder.buildLoginMessage(e.getChannel(), loginAuthRetData.id, loginAuthRetData.passport, loginAuthRetData.auth, loginAuthRetData.privilege, loginAuthRetData.forbiddenEndTalkTime));
+                        ServerRecvMessageQueue.queue().offer(S2SMessageBuilder.buildLoginMessage(e.getChannel(), loginAuthRetData.id, loginAuthRetData.passport, loginAuthRetData.auth, loginAuthRetData.privilege, loginAuthRetData.forbiddenEndTalkTime));
                     } else {
                         System.err.println("Player[" + playerId + "] Can't multi-login.");
                     }
                     break;
                 case ProtobufMessageType.C2S_CREATECHAR:
-                    CreateCharProto createCharInfo = CreateCharProto.getDefaultInstance().newBuilderForType().mergeFrom(new ChannelBufferInputStream(cb)).build();
-                    ServerMessageQueue.queue().offer(ServerMessageBuilder.buildCreateCharMessage(playerId, createCharInfo));
+                    CSCreateCharProto createCharInfo = CSCreateCharProto.getDefaultInstance().newBuilderForType().mergeFrom(new ChannelBufferInputStream(cb)).build();
+                    ServerRecvMessageQueue.queue().offer(S2SMessageBuilder.buildCreateCharMessage(playerId, createCharInfo));
                     break;
-                    
-                case ProtobufMessageType.C2S_CONTSIGN_CUMULATIVE_REWARD_RECEIVED: {
-                    ServerMessageQueue.queue().offer(ServerMessageBuilder.buildContSignCumulativeSignRewardReceiveMessage(playerId));
-                    break;
-                }
-                case ProtobufMessageType.C2S_CONTSIGN_CONSECUTIVE_REWARD_RECEIVED: {
-                    IntValueProto intValue = IntValueProto.getDefaultInstance().newBuilderForType().mergeFrom(new ChannelBufferInputStream(cb)).build();
-                    ServerMessageQueue.queue().offer(ServerMessageBuilder.buildContSignConsecutiveRewardReceiveMessage(playerId, intValue.getValue()));
-                    break;
-                }
-                case ProtobufMessageType.C2S_VIP_GIFT_RECEIVE: {
-                    IntValueProto intValue = IntValueProto.getDefaultInstance().newBuilderForType().mergeFrom(new ChannelBufferInputStream(cb)).build();
-                    ServerMessageQueue.queue().offer(ServerMessageBuilder.buildVipGiftReceiveMessage(playerId, intValue.getValue()));
-                    break;
-                }
-                    
-                   
             }
         } catch (IOException ex) {
             System.err.println("Player[" + playerId + "] Message Received Type: " + type + " Error: " + ex.getMessage());
@@ -124,12 +117,12 @@ public class ClientConnectHandler extends SimpleChannelUpstreamHandler {
             e.getChannel().close();
         }
     }
-    
+
     private JSONLoginAuthRetData checkAccount(String sessionId, String clientIp) {
         HttpURLConnection con = null;
         BufferedReader in = null;
         try {
-            con = (HttpURLConnection) new URL(ProjectCardServer.INSTANCE.loginCheckUrl).openConnection();
+            con = (HttpURLConnection) new URL(GameServer.INSTANCE.loginCheckUrl).openConnection();
             con.setRequestMethod("POST");
             con.setDoOutput(true);
             con.setConnectTimeout(2000);
@@ -158,7 +151,7 @@ public class ClientConnectHandler extends SimpleChannelUpstreamHandler {
             }
 
             return retData;
-        } catch (IOException ex) { 
+        } catch (IOException ex) {
             System.err.println("PlayerConnectHandler Check Account Error: " + ex.getMessage());
             return null;
         } finally {
@@ -174,17 +167,16 @@ public class ClientConnectHandler extends SimpleChannelUpstreamHandler {
             }
         }
     }
-    
+
     private void loginFail(final Channel channel) {
         if (channel == null) {
             return;
         }
 
-        ChannelFuture channelFuture = channel.write(ServerToClientMessageBuilder.buildLoginFail());
+        ChannelFuture channelFuture = channel.write(S2CMessageBuilder.buildLoginFail());
         if (channelFuture != null) {
             //f.addListener(ChannelFutureListener.CLOSE);
             channelFuture.addListener(new ChannelFutureListener() {
-
                 @Override
                 public void operationComplete(ChannelFuture future) {
                     future.getChannel().close();

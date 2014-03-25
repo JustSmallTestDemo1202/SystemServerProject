@@ -5,6 +5,11 @@
 package com.phoenix.server.player.state;
 
 import com.phoenix.common.message.serverRecvMessage.ServerRecvMessage;
+import com.phoenix.common.messageQueue.DBMessageQueue;
+import com.phoenix.protobuf.ExternalCommonProtocol.CSCreateCharProto;
+import com.phoenix.server.message.messageBuilder.DBMessageBuilder;
+import com.phoenix.server.message.messageBuilder.S2CMessageBuilder;
+import com.phoenix.server.message.serverRecvMessage.CreateCharMessage;
 import com.phoenix.server.player.MapPlayer;
 import com.phoenix.server.player.Player;
 
@@ -25,7 +30,7 @@ public class Login2PlayerState implements PlayerState {
         // 告诉主线程切断玩家连接并清理玩家上下文
         MapPlayer p = (MapPlayer) player;
         int playerId = p.getId();
-        MessageType msgType = message.getType();
+        ServerRecvMessage.ServerRecvMessageType msgType = message.getType();
         switch (msgType) {
             case MAP_CREATE_CHAR: {
                 // 处理创建角色请求
@@ -38,7 +43,7 @@ public class Login2PlayerState implements PlayerState {
                     p.state = CreatingCharPlayerState.INSTANCE;
                 } else {
                     // TODO: 回复客户端无法创建角色
-                    p.channelContext.write(ServerToClientMessageBuilder.buildCreateCharError());
+                    p.channelContext.write(S2CMessageBuilder.buildCreateCharError());
                 }
                 return true;
             }
@@ -51,7 +56,7 @@ public class Login2PlayerState implements PlayerState {
         }
     }
 
-    public boolean isValidate(CreateCharProto charInfo) {
+    public boolean isValidate(CSCreateCharProto charInfo) {
         // 验证玩家输入信息
 
         // 验证名字长度
