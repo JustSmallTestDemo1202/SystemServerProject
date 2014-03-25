@@ -5,24 +5,45 @@
 package com.phoenix.server;
 
 import com.phoenix.common.database.DBThreadHandler;
+import com.phoenix.common.message.protobufMessage.ProtobufMessage;
+import com.phoenix.common.message.serverRecvMessage.ExternalPlayerMessage;
+import com.phoenix.common.message.serverRecvMessage.InternalPlayerMessage;
 import com.phoenix.common.message.serverRecvMessage.ServerRecvMessage;
+import com.phoenix.common.messageQueue.DBMessageQueue;
 import com.phoenix.common.messageQueue.ServerRecvMessageQueue;
+import com.phoenix.common.messageQueue.ServerSendMessageQueue;
 import com.phoenix.common.network.ClientConnectHandler;
 import com.phoenix.common.network.ServerSendThreadHandler;
 import com.phoenix.common.network.channel.UninitializeChannel;
 import com.phoenix.common.network.listenerServer.ClientConnectServer;
 import com.phoenix.common.network.pipilineFactory.CommonToServerPipelineFactory;
+import com.phoenix.server.actor.Human;
+import com.phoenix.server.message.messageBuilder.DBMessageBuilder;
+import com.phoenix.server.message.messageBuilder.S2CMessageBuilder;
+import com.phoenix.server.message.serverRecvMessage.LoginMessage;
+import com.phoenix.server.message.serverSendMessage.AddChannelContextNSTMessage;
+import com.phoenix.server.player.MapPlayer;
+import com.phoenix.server.player.Player;
+import com.phoenix.server.player.PlayerContext;
+import com.phoenix.server.player.state.NormalPlayerState;
+import com.phoenix.server.timer.HumanUpdateTimer;
 import com.phoenix.utils.CommonUtil;
 import com.phoenix.utils.Consts;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.jboss.netty.channel.Channel;
 import org.jboss.netty.handler.execution.ExecutionHandler;
 import org.jboss.netty.handler.execution.OrderedMemoryAwareThreadPoolExecutor;
 
@@ -66,14 +87,23 @@ public class GameServer implements Runnable {
     private ExecutorService nioExecutorService;
     
     // 以channelID作为索引玩家ID
-    public final ConcurrentHashMap<Integer, Integer> channelID2PlayerIDMap = new ConcurrentHashMap<Integer, Integer>();
+    public final ConcurrentHashMap<Integer, Integer> channelID2PlayerIDMap = new ConcurrentHashMap<>();
     // players以playerID为索引记录玩家对象（包括正在登录的玩家和已进入游戏的玩家）
-    public final HashMap<Integer, MapPlayer> players = new HashMap<Integer, MapPlayer>();
+    public final HashMap<Integer, MapPlayer> players = new HashMap<>();
     // playerContexts保存玩家上下文，key为playerId。找不到则创建玩家上下文并异步加载玩家数据
-    public final HashMap<Integer, PlayerContext> playerContexts = new HashMap<Integer, PlayerContext>();
-    
+    public final HashMap<Integer, PlayerContext> playerContexts = new HashMap<>();
+    // 玩家定时器
+    public final LinkedList<HumanUpdateTimer> humanUpdateTimers = new LinkedList<>();
     // 简略玩家信息表
-    //public BriefPlayerInfos briefPlayerInfos; 
+    public BriefPlayerInfos briefPlayerInfos; 
+    
+    // 上次清理玩家数据时间
+    private long lastCleanCachePlayerTime;
+    // 上次记录玩家在线数的时间
+    private long lastLogOnlinePlayerCountTime;
+    
+    // 服务器停服时间
+    private long shutdownTime;
     
     private long realPrevTime;
     // 当前服务器时间
@@ -272,9 +302,241 @@ public class GameServer implements Runnable {
         new Thread(this, "GameServerThread").start();
     }
     
-    private void handleMessages() {
-        
+    // 全服广播
+    public void broadcast(ProtobufMessage message) {
+        for (MapPlayer mapPlayer : players.values()) {
+            if (mapPlayer.state == NormalPlayerState.INSTANCE) {
+                mapPlayer.channelContext.write(message);
+            }
+        }
     }
+    
+    // 对指定玩家发送消息
+    public void broadcast(List<Integer> charIds, ProtobufMessage message, boolean needOffLineSend) {
+        for (int charId : charIds) {
+            MapPlayer mapPlayer = players.get(charId);
+            if (mapPlayer != null && mapPlayer.state == NormalPlayerState.INSTANCE) {
+                mapPlayer.channelContext.write(message);
+            } else if (needOffLineSend) {
+                //离线消息
+            }
+        }
+    }
+    
+    public void enterGame(MapPlayer player) {
+        Human human = player.human;
+        assert (human != null);
+
+        human.enterGame();
+        
+        humanUpdateTimers.add(new HumanUpdateTimer(human));
+    }
+    
+    public PlayerContext loadPlayerData(int playerId) {
+        // 载入玩家数据
+        PlayerContext playerContext = playerContexts.get(playerId);
+
+        if (playerContext == null) {
+            playerContext = new PlayerContext();
+            playerContext.lastVisitTime = getCurrentTime();
+            playerContext.player = players.get(playerId);
+
+            playerContexts.put(playerId, playerContext);
+            // 通知DB线程加载玩家数据
+            DBMessageQueue.queue().offer(DBMessageBuilder.buildGetCharDetailDBMessage(playerId));
+        } else if (playerContext.human != null) {
+            System.err.println("load player[" + playerId + "] data fail because already loaded.");
+        }
+
+        return playerContext;
+    }
+    
+    public void removePlayer(MapPlayer player) {
+        assert (player != null);
+
+        Human human = player.human;
+        if (human != null) {
+            human.leaveGame();
+        }
+
+        PlayerContext playerContext = playerContexts.get(player.getId());
+        if (playerContext != null) {
+            playerContext.lastVisitTime = getCurrentTime();
+            playerContext.player = null;
+        }
+
+        // 注意：关闭channel会触发产生CLIENTCLOSE消息处理
+        player.channelContext.close();
+    }
+    
+    private void shutdown() {
+        // 停服处理
+        // 将在线玩家踢下线，并在关服过程中不接受新登陆需求
+        for (MapPlayer player : players.values()) {
+            removePlayer(player);
+        }
+
+        isShuttingDown = true;
+        shutdownTime = getCurrentTime() + 10 * Consts.MILSECOND_1SECOND;
+
+        System.out.println("Server[" + serverId + "] is shutting down.");
+    }
+    
+    private void handleMessages() {
+        ServerRecvMessage msg = messageQueue.poll();
+        while (msg != null) {
+            switch (msg.getType()) {
+                case MAP_SVR_SHUTDOWN: {
+                    shutdown();
+                    break;
+                }
+                case MAP_CLIENT_CONNECT: {
+                    Channel clientChannel = ((ExternalPlayerMessage) msg).channel;
+                    uninitializeChannels.put(clientChannel.getId(), new UninitializeChannel(clientChannel));
+                    break;
+                }
+                case MAP_CLIENT_CLOSE: {
+                    // TODO: 区分是网络断线还是被服务器踢出，若是断线则启动重连等待计时逻辑
+                    // 玩家连接断开处理
+                    Channel clientChannel = ((ExternalPlayerMessage) msg).channel;
+                    Integer channelId = clientChannel.getId();
+                    UninitializeChannel uninitializeChannel = uninitializeChannels.remove(channelId);
+                    if (uninitializeChannel == null) {
+                        // 找到玩家状态机上下文，并让玩家离线
+                        Integer playerId = channelID2PlayerIDMap.remove(channelId);
+                        if (playerId != null) {
+                            // 注意：players.remove只此一处，因此可以在此处实现重复登陆可以在踢出前一登陆后进入游戏的逻辑
+                            MapPlayer mapPlayer = players.remove(playerId);
+                            if (mapPlayer != null) {
+                                removePlayer(mapPlayer);
+
+                                // 为了实现后登陆踢出前登陆进入游戏，此处重新将mapPlayer对象中记录的消息放入消息队列
+                                if (mapPlayer.loginMessage != null) {
+                                    ServerRecvMessageQueue.queue().offer(mapPlayer.loginMessage);
+                                    mapPlayer.loginMessage = null;
+                                }
+                            }
+                        }
+                    }
+                    break;                   
+                }
+                case MAP_LOGIN: {
+                    LoginMessage loginMsg = (LoginMessage) msg;
+                    Channel clientChannel = loginMsg.channel;
+                    int channelId = clientChannel.getId();
+                    int playerId = loginMsg.playerId;
+                    // 防止玩家登陆时断线，使上线玩家是个无连接玩家并僵死在线上，并导致玩家始终无法登陆
+                    if (clientChannel.isOpen()) {
+                        // 如果已经存在玩家对象该如何处理？踢出游戏中玩家并断开正在登录的连接
+                        MapPlayer player = players.get(playerId);
+                        if (player != null) {
+                            // TODO: 若要实现后登陆踢出前登陆进入游戏，可将此处实现改为不断开后登陆连接，将后登陆消息记录在player中，待处理ALL_CLIENTCLOSE消息时重新将后登陆消息放入消息队列
+                            // 注意：当有多重登陆时只有最后登陆能进入游戏，中间登陆连接都要断开并删除相关对象                            
+                            if (player.loginMessage != null) {
+                                Channel channel = player.loginMessage.channel;
+                                uninitializeChannels.remove(channel.getId());
+                                channel.close();
+                            }
+                            player.loginMessage = loginMsg;
+                            removePlayer(player);
+                            System.err.println("Player[" + playerId + "] multilogin -- channel id:" + channelId);
+                        } else if (isShuttingDown) {
+                            // 正在关服，拒绝登陆
+                            uninitializeChannels.remove(channelId);
+                            clientChannel.close();
+                        } else {
+                            // 创建Player上下文
+                            // 已经将Player初始化为Login1State
+                            player = new MapPlayer(playerId, loginMsg.passport, loginMsg.auth, loginMsg.privilege, loginMsg.endForbidTalkTime, clientChannel);
+
+                            PlayerContext playerContext = playerContexts.get(playerId);
+                            if (playerContext != null) {
+                                assert (playerContext.player == null);
+                                playerContext.lastVisitTime = getCurrentTime();
+
+                                if (playerContext.human != null) {
+                                    player.human = playerContext.human;
+                                    player.human.mapPlayer = player;
+                                }
+
+                                playerContext.player = player;
+                            }
+                            players.put(playerId, player);
+                            channelID2PlayerIDMap.put(channelId, playerId);
+
+                            uninitializeChannels.remove(channelId);
+
+                            // 将Player的channelContext加入网络发送线程
+                            ServerSendMessageQueue.queue().add(new AddChannelContextNSTMessage(player.channelContext));
+
+                            // 向DBApp获取玩家基本角色信息
+                            DBMessageQueue.queue().offer(DBMessageBuilder.buildGetCharNumDBMessage(playerId));
+                        }
+                    } else {
+                        System.err.println("Player[" + playerId + "] can't login because channel is closed.");
+                    }
+                    break;
+                }
+                default: {
+                    // 处理玩家相关消息，转至玩家的handleMessage处理
+                    int playerId = ((InternalPlayerMessage) msg).playerId;
+                    Player player = players.get(playerId);
+
+                    if (player != null) {
+                        player.handleMessage(msg);
+                    } else {
+                        System.err.println("Can't find player[" + playerId + "] to handle message[" + msg.getType() + "].");
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    
+    
+    // 定期清理PlayerContext数据     
+    private void cleanPlayer() {
+        if (realCurrTime - lastCleanCachePlayerTime >= Consts.CLEAR_OFFLINE_PLAYER_TIME) {
+            lastCleanCachePlayerTime = realCurrTime;
+            for (Iterator<PlayerContext> it = playerContexts.values().iterator(); it.hasNext();) {
+                PlayerContext playerContext = it.next();
+
+                if ((playerContext.player == null) && (realCurrTime - playerContext.lastVisitTime >= Consts.CLEAR_OFFLINE_PLAYER_TIME)) {
+                    if (playerContext.human != null) {
+                        playerContext.human = null;
+                    } else {
+                        // 不可能出现playerContext.player和playerContext.human同时为null的情况
+                        System.err.println("Clean player context error.");
+                    }
+                    it.remove();
+                }
+            }
+        }
+    }
+    
+    // 定期记录当前在线玩家数据
+    private void logOnlinePlayerCount() {
+        if (realCurrTime - lastLogOnlinePlayerCountTime >= Consts.LOG_ONLINE_PLAYER_COUNT_TIME) {
+            lastLogOnlinePlayerCountTime = realCurrTime;
+            // 将玩家数目计入数据库
+            // GameLogger.getlogger().log(GameLogMessageBuilder.buildDBOnlineNumGameLogMessage(players.size()));
+        }
+    }
+
+    // 关闭DB线程
+    public void shutdownDBThread() {
+        DBMessageQueue.queue().offer(DBMessageBuilder.buildShutdownDBMessage());
+    }
+    
+    private void updateHumans(int difftime) {
+        for (Iterator<HumanUpdateTimer> iterator = humanUpdateTimers.iterator(); iterator.hasNext();) {
+            HumanUpdateTimer humanUpdateTimer = iterator.next();
+            if (!humanUpdateTimer.update(difftime)) {
+                iterator.remove();
+            }
+        }
+    }
+    
     
     @Override
     public void run() {
@@ -287,9 +549,23 @@ public class GameServer implements Runnable {
                     System.err.println( "MainThread: Difftime=" + diffTime + " Error!");
                 }
                 
+                 if (isShuttingDown && (players.isEmpty() || (realCurrTime > shutdownTime))) {
+                    break;
+                }
+                
+                 // 更新玩家
+                updateHumans(diffTime);
+
+                // 定期清理离线玩家（一小时执行一次清理，离线超过一小时的玩家会被从内存删除）
+                cleanPlayer();
+
+                // 定期记录在线玩家数目
+                logOnlinePlayerCount();
+                
+                
                 // 心跳 - 广播到客户端，客户端进行校时
                 if (realCurrTime / Consts.MILSECOND_1MINITE > realPrevTime / Consts.MILSECOND_1MINITE) {
-                    //broadcast(ServerToClientMessageBuilder.buildRealTime(realCurrTime));
+                    broadcast(S2CMessageBuilder.buildRealTime(realCurrTime));
                 }
                 
                 handleMessages();
@@ -316,6 +592,31 @@ public class GameServer implements Runnable {
                 System.err.println("MainThread Error: " + ex.getMessage());
             }
         }
+        
+        // 将所有在线玩家数据存盘
+        for (MapPlayer player : players.values()) {
+            if (player.human != null) {
+                player.human.flushData();
+            }
+        }       
+
+        // 通知数据库线程在完成之前所有数据库任务后结束
+        shutdownDBThread();
+
+        // 等待数据库线程结束
+        try {
+            dbThread.join(0);
+
+            Thread.sleep(1000); // 睡眠一秒等待日志结束
+        } catch (InterruptedException ex) {
+            Logger.getLogger(GameServer.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        // 关闭日志线程
+        GameLogger.getlogger().shutdown();
+
+        System.exit(0);
+        
     }
 
     /**
@@ -346,5 +647,5 @@ public class GameServer implements Runnable {
         } catch (NumberFormatException e) {
             e.printStackTrace();
         }
-    }
+    }   
 }

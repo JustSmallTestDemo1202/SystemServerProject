@@ -6,6 +6,8 @@ package com.phoenix.server.player.state;
 
 import com.phoenix.common.message.serverRecvMessage.ServerRecvMessage;
 import com.phoenix.server.GameServer;
+import com.phoenix.server.message.messageBuilder.S2CMessageBuilder;
+import com.phoenix.server.message.serverRecvMessage.CharNumMessage;
 import com.phoenix.server.player.MapPlayer;
 import com.phoenix.server.player.Player;
 
@@ -26,23 +28,23 @@ public class Login1PlayerState implements PlayerState {
         // 告诉主线程切断玩家连接并清理玩家上下文
         MapPlayer p = (MapPlayer) player;
         int playerId = p.getId();
-        MessageType msgType = message.getType();
+        ServerRecvMessage.ServerRecvMessageType msgType = message.getType();
         switch (msgType) {
             case MAP_CHAR_NUM: {
                 CharNumMessage charNumMessage = (CharNumMessage) message;
 
                 if (charNumMessage.charNum == 0) {
                     // 未创建角色
-                    p.channelContext.write(ServerToClientMessageBuilder.buildLoginRetNoChar());
+                    p.channelContext.write(S2CMessageBuilder.buildLoginRetNoChar());
                     p.state = Login2PlayerState.INSTANCE;
                 } else if (charNumMessage.charNum == 1) {
                     // 角色存在
                     if (p.human != null) { // 玩家数据已关联
                         if (p.human.mapPlayer != null) {
-                            ProjectCardServer.INSTANCE.enterGame(p);
+                            GameServer.INSTANCE.enterGame(p);
                             p.state = NormalPlayerState.INSTANCE;
                         } else {
-                            System.err.println("Player[" + playerId + "] Login1State human.mapPlayer==null error.");
+                            System.err.println("Player[" + playerId + "] Login1State human.mapPlayer == null error.");
                         }
                     } else { // 玩家数据未关联
                         GameServer.INSTANCE.loadPlayerData(playerId);

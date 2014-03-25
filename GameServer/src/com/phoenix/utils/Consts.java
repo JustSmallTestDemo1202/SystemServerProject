@@ -34,4 +34,11 @@ public class Consts {
     public static final int JET_LAG = MILSECOND_8HOUR;                      // 时差 - 东8区
     public static final int GAME_SLEEP_CONST = 50;                          // Unit ms, that is 0.05 second
     public static final int LOG_SLEEP_CONST = 100;                          // Unit ms, that is 0.05 second
+    
+    public static final int CLEAR_OFFLINE_PLAYER_TIME = MILSECOND_1HOUR;    // 清除离线玩家的时间
+    public static final int CLEAR_RELATION_TIME = MILSECOND_1HOUR;          // 清除关系的时间
+    public static final int CLEAR_BRIEF_PLAYERINFO_TIME = MILSECOND_1HOUR;  // 清除玩家简略信息的时间
+    public static final int LOG_ONLINE_PLAYER_COUNT_TIME = MILSECOND_1MINITE;   // 采样在线人数时间周期
+    
+    public static final int FLUSH_PLAYER_DATA_PERIOD = MILSECOND_5MINITE;   // 五分钟刷一次玩家数据到数据库
 }
