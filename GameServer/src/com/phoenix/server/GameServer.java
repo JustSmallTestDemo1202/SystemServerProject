@@ -328,6 +328,46 @@ public class GameServer implements Runnable {
         assert (human != null);
 
         human.enterGame();
+    }
+    
+    public PlayerContext loadPlayerData(int playerId) {
+        // 载入玩家数据
+        PlayerContext playerContext = playerContexts.get(playerId);
+
+        if (playerContext == null) {
+            playerContext = new PlayerContext();
+            playerContext.lastVisitTime = getCurrentTime();
+            playerContext.player = players.get(playerId);
+
+            playerContexts.put(playerId, playerContext);
+            // 通知DB线程加载玩家数据
+            DBMessageQueue.queue().offer(DBMessageBuilder.buildGetCharDetailDBMessage(playerId));
+        } else if (playerContext.human != null) {
+            System.err.println("load player[" + playerId + "] data fail because already loaded.");
+        }
+
+        return playerContext;
+    }
+    
+    public void removePlayer(MapPlayer player) {
+        assert (player != null);
+
+        Human human = player.human;
+        if (human != null) {
+            human.leaveGame();
+        }
+
+        PlayerContext playerContext = playerContexts.get(player.getId());
+        if (playerContext != null) {
+            playerContext.lastVisitTime = getCurrentTime();
+            playerContext.player = null;
+        }
+
+        // 注意：关闭channel会触发产生CLIENTCLOSE消息处理
+        player.channelContext.close();
+    }
+    
+    private void handleMessages() {
         
         humanUpdateTimers.add(new HumanUpdateTimer(human));
     }
