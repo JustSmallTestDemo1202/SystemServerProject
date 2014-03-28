@@ -1,4 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/message/messageBuilder/DBMessageBuilder.java</file>
+            <file>file:/E:/SystemServerProject/GameServer/src/protobuf/ExternalCommonProtocol.proto</file>
+            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/GameServer.java</file>
+            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/social/BriefPlayerInfo.java</file>
+            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/message/dbMessage/SaveCharInfoDBMessage.java</file>
+            <file>file:/E:/SystemServerProject/GameServer/src/protobuf/InternalCommonProtocol.proto</file>
+            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/social/BriefPlayerInfos.java</file>
+            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/protobuf/InternalCommonProtocol.java</file>
+            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/actor/charInfo/DetailCharInfo.java</file>
+            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/common/message/dbMessage/DBMessage.java</file>
+            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/actor/Human.java</file>
+        </group>
+    </open-files>
 </project-private>

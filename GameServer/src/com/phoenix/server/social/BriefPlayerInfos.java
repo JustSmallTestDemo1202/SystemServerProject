@@ -49,18 +49,18 @@ public class BriefPlayerInfos {
         }
     }
 
-    public void addBriefPlayerInfo(int playerId, String name, int level, int leaderCardId, int leaderCardLevel, boolean inGame) {
+    public void addBriefPlayerInfo(int playerId, String name, int job, int gender, int level, boolean inGame) {
         BriefPlayerInfo briefPlayerInfo = playerId2InfoMap.get(playerId);
 
         if (briefPlayerInfo == null) {
-            briefPlayerInfo = new BriefPlayerInfo(playerId, name, level, leaderCardId, leaderCardLevel);
+            briefPlayerInfo = new BriefPlayerInfo(playerId, name, job, gender, level);
             briefPlayerInfo.inGame = inGame;
             briefPlayerInfo.lastVisitTime = GameServer.INSTANCE.getCurrentTime();
 
             playerId2InfoMap.put(playerId, briefPlayerInfo);
 
             // 加入等级表
-            briefPlayerInfosOfLevels[briefPlayerInfo.level - 1].addBriefPlayerInfo(briefPlayerInfo);
+            // briefPlayerInfosOfLevels[briefPlayerInfo.level - 1].addBriefPlayerInfo(briefPlayerInfo);
         } else {
             System.err.println("Add brief player[" + playerId + "] info error because info already exist.");
         }

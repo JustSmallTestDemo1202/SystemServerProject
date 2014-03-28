@@ -26,6 +26,7 @@ import com.phoenix.server.player.MapPlayer;
 import com.phoenix.server.player.Player;
 import com.phoenix.server.player.PlayerContext;
 import com.phoenix.server.player.state.NormalPlayerState;
+import com.phoenix.server.social.BriefPlayerInfos;
 import com.phoenix.server.timer.HumanUpdateTimer;
 import com.phoenix.utils.CommonUtil;
 import com.phoenix.utils.Consts;
@@ -490,8 +491,7 @@ public class GameServer implements Runnable {
                 }
             }
         }
-    }
-    
+    }    
     
     // 定期清理PlayerContext数据     
     private void cleanPlayer() {
@@ -612,10 +612,9 @@ public class GameServer implements Runnable {
         }
 
         // 关闭日志线程
-        GameLogger.getlogger().shutdown();
+        //GameLogger.getlogger().shutdown();
 
-        System.exit(0);
-        
+        System.exit(0);        
     }
 
     /**
