@@ -62,7 +62,7 @@ message CSCreateCharProto {
     optional int32 sex = 3;
 }
 
-message EnterGameCharProto {
+message SCEnterGameCharProto {
     required int32 charId = 1;                  // id
     required string charName = 2;               // 名字    
     required int32 charJob = 3;                 // 玩家职业
@@ -75,7 +75,7 @@ message SCEnterGameRetProto {
     required int32 result = 1;
     optional string errmsg = 2;
 
-    optional EnterGameCharProto enterGameChar = 3;
+    optional SCEnterGameCharProto enterGameChar = 3;
 }
 
 

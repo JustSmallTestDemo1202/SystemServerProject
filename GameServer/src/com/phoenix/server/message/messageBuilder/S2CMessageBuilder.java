@@ -7,6 +7,8 @@ package com.phoenix.server.message.messageBuilder;
 import com.phoenix.common.message.protobufMessage.ProtobufMessage;
 import com.phoenix.common.message.protobufMessage.ProtobufMessageType;
 import com.phoenix.protobuf.ExternalCommonProtocol.LongValueProto;
+import com.phoenix.protobuf.ExternalCommonProtocol.SCEnterGameCharProto;
+import com.phoenix.protobuf.ExternalCommonProtocol.SCEnterGameRetProto;
 
 /**
  *
@@ -30,5 +32,14 @@ public class S2CMessageBuilder {
 
     public static ProtobufMessage buildCreateCharError() {
         return new ProtobufMessage(ProtobufMessageType.S2C_CREATE_CHAR_ERROR, null);
+    }
+
+    public static ProtobufMessage buildEnterGameRet(SCEnterGameCharProto enterGameCharInfo) {
+        SCEnterGameRetProto.Builder builder = SCEnterGameRetProto.newBuilder();
+
+        builder.setResult(0);
+        builder.setEnterGameChar(enterGameCharInfo);
+
+        return new ProtobufMessage(ProtobufMessageType.S2C_ENTER_GAME_RET, builder.build());
     }
 }
