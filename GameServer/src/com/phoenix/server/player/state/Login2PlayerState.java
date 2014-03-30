@@ -7,9 +7,11 @@ package com.phoenix.server.player.state;
 import com.phoenix.common.message.serverRecvMessage.ServerRecvMessage;
 import com.phoenix.common.messageQueue.DBMessageQueue;
 import com.phoenix.protobuf.ExternalCommonProtocol.CSCreateCharProto;
+import com.phoenix.server.GameServer;
 import com.phoenix.server.message.messageBuilder.DBMessageBuilder;
 import com.phoenix.server.message.messageBuilder.S2CMessageBuilder;
 import com.phoenix.server.message.serverRecvMessage.CreateCharMessage;
+import com.phoenix.server.message.serverRecvMessage.SelectCharMessage;
 import com.phoenix.server.player.MapPlayer;
 import com.phoenix.server.player.Player;
 
@@ -47,6 +49,21 @@ public class Login2PlayerState implements PlayerState {
                 }
                 return true;
             }
+            case MAP_SELECT_CHAR: {
+                SelectCharMessage selectCharMsg = (SelectCharMessage) message;
+                if (p.human != null && p.human.indexId == selectCharMsg.charInfo.getIndexId()) { // 玩家数据已关联
+                    if (p.human.mapPlayer != null) {
+                        GameServer.INSTANCE.enterGame(p);
+                        p.state = NormalPlayerState.INSTANCE;
+                    } else {
+                        System.err.println("Player[" + playerId + "] Login2State human.mapPlayer == null error.");
+                    }
+                } else { // 玩家数据未关联
+                    GameServer.INSTANCE.loadPlayerData(playerId);
+                    p.state = UninitPlayerState.INSTANCE;
+                }
+                return true;
+            }
             default: {
                 // 错误消息类型（不作处理），记录日志
                 System.err.println("Player[" + playerId + "] Login3State handle error message type[" + msgType + "].");
@@ -60,7 +77,7 @@ public class Login2PlayerState implements PlayerState {
         // 验证玩家输入信息
 
         // 验证名字长度
-        String name = charInfo.getName();
+        String name = charInfo.getCharName();
         int nameLenth = name.length();
         if ((nameLenth < 2) || (nameLenth > 8)) {
             System.err.println("Player Name Too Long or Too Short");
@@ -68,7 +85,7 @@ public class Login2PlayerState implements PlayerState {
         }
 
         // 验证职业
-        int jobId = charInfo.getJob();
+        int jobId = charInfo.getCharJob();
         return jobId >= 0 && jobId < 5;
     }
 }

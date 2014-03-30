@@ -36,23 +36,34 @@ public class Login1PlayerState implements PlayerState {
                 if (charNumMessage.charNum == 0) {
                     // 未创建角色
                     p.channelContext.write(S2CMessageBuilder.buildLoginRetNoChar());
-                    p.state = Login2PlayerState.INSTANCE;
-                } else if (charNumMessage.charNum == 1) {
-                    // 角色存在
-                    if (p.human != null) { // 玩家数据已关联
-                        if (p.human.mapPlayer != null) {
-                            GameServer.INSTANCE.enterGame(p);
-                            p.state = NormalPlayerState.INSTANCE;
-                        } else {
-                            System.err.println("Player[" + playerId + "] Login1State human.mapPlayer == null error.");
-                        }
-                    } else { // 玩家数据未关联
-                        GameServer.INSTANCE.loadPlayerData(playerId);
-                        p.state = UninitPlayerState.INSTANCE;
-                    }
                 } else {
-                    System.err.println("Player[" + playerId + "] Login1State get char num==" + charNumMessage.charNum + " error.");
+                    p.channelContext.write(S2CMessageBuilder.buildLoginCharList(charNumMessage.charDetail));
                 }
+
+                p.state = Login2PlayerState.INSTANCE;
+
+                /*
+                 if (charNumMessage.charNum == 0) {
+                 // 未创建角色
+                 p.channelContext.write(S2CMessageBuilder.buildLoginRetNoChar());
+                 p.state = Login2PlayerState.INSTANCE;
+                 } else if (charNumMessage.charNum == 1) {
+                 // 角色存在
+                 if (p.human != null) { // 玩家数据已关联
+                 if (p.human.mapPlayer != null) {
+                 GameServer.INSTANCE.enterGame(p);
+                 p.state = NormalPlayerState.INSTANCE;
+                 } else {
+                 System.err.println("Player[" + playerId + "] Login1State human.mapPlayer == null error.");
+                 }
+                 } else { // 玩家数据未关联
+                 GameServer.INSTANCE.loadPlayerData(playerId);
+                 p.state = UninitPlayerState.INSTANCE;
+                 }
+                 } else {
+                 System.err.println("Player[" + playerId + "] Login1State get char num==" + charNumMessage.charNum + " error.");
+                 }
+                 */
                 return true;
             }
             default: {

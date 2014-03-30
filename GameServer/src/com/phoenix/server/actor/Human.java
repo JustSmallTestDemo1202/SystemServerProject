@@ -20,8 +20,9 @@ import com.phoenix.server.timer.HumanUpdateTimer;
  * @author rachel
  */
 public class Human {
-
+    public final int indexId;           // 玩家角色索引（唯一）
     public final int charId;            // 玩家id
+    public final int charIndex;         // 玩家id索引
     public String charName;             // 玩家名
     public int charJob;                 // 玩家职业
     public int charGender;              // 玩家性别
@@ -40,7 +41,9 @@ public class Human {
     }
 
     public Human(int charId, DetailCharInfo detailCharInfo) {
+        this.indexId = detailCharInfo.indexId;
         this.charId = detailCharInfo.charId;
+        this.charIndex = detailCharInfo.charIndex;
         this.charName = detailCharInfo.charName;
         this.charJob = detailCharInfo.charJob;
         this.charGender = detailCharInfo.charGender;
@@ -50,7 +53,9 @@ public class Human {
 
     public DetailCharInfo buildDetailCharInfo() {
         DetailCharInfo detailCharInfo = new DetailCharInfo();
+        detailCharInfo.indexId = this.indexId;
         detailCharInfo.charId = this.charId;
+        detailCharInfo.charIndex = this.charIndex;
         detailCharInfo.charName = this.charName;                // 玩家名
         detailCharInfo.charJob = this.charJob;                  // 玩家职业
         detailCharInfo.charGender = this.charGender;            // 玩家性别

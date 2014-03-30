@@ -11,6 +11,7 @@ import com.phoenix.common.message.protobufMessage.ProtobufMessageType;
 import com.phoenix.common.messageQueue.ServerRecvMessageQueue;
 import com.phoenix.protobuf.ExternalCommonProtocol.CSCreateCharProto;
 import com.phoenix.protobuf.ExternalCommonProtocol.CSLoginProto;
+import com.phoenix.protobuf.ExternalCommonProtocol.CSSelectCharProto;
 import com.phoenix.server.GameServer;
 import com.phoenix.server.message.messageBuilder.S2CMessageBuilder;
 import com.phoenix.server.message.messageBuilder.S2SMessageBuilder;
@@ -100,9 +101,13 @@ public class ClientConnectHandler extends SimpleChannelUpstreamHandler {
                         System.err.println("Player[" + playerId + "] Can't multi-login.");
                     }
                     break;
-                case ProtobufMessageType.C2S_CREATECHAR:
+                case ProtobufMessageType.C2S_CREATE_CHAR:
                     CSCreateCharProto createCharInfo = CSCreateCharProto.getDefaultInstance().newBuilderForType().mergeFrom(new ChannelBufferInputStream(cb)).build();
                     ServerRecvMessageQueue.queue().offer(S2SMessageBuilder.buildCreateCharMessage(playerId, createCharInfo));
+                    break;
+                case ProtobufMessageType.C2S_SELECT_CHAR:
+                    CSSelectCharProto selectCharInfo = CSSelectCharProto.getDefaultInstance().newBuilderForType().mergeFrom(new ChannelBufferInputStream(cb)).build();
+                    ServerRecvMessageQueue.queue().offer(S2SMessageBuilder.buildSelectCharMessage(playerId, selectCharInfo));
                     break;
             }
         } catch (IOException ex) {

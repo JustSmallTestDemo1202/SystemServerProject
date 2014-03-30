@@ -84,6 +84,7 @@ public class DBThreadHandler implements Runnable {
             switch (type) {
                 case DB_MESSAGE_GET_CHAR_NUM: {
                     if (needSendShutdown == false) {
+                        
                     }
                     break;
                 }
