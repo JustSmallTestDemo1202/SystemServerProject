@@ -59,7 +59,7 @@ public class Login2PlayerState implements PlayerState {
                         System.err.println("Player[" + playerId + "] Login2State human.mapPlayer == null error.");
                     }
                 } else { // 玩家数据未关联
-                    GameServer.INSTANCE.loadPlayerData(playerId);
+                    GameServer.INSTANCE.loadPlayerData(playerId, selectCharMsg.charInfo.getIndexId());
                     p.state = UninitPlayerState.INSTANCE;
                 }
                 return true;

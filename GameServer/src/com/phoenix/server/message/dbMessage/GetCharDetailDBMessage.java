@@ -13,9 +13,11 @@ import com.phoenix.common.message.dbMessage.SimpleDBMessage;
 public class GetCharDetailDBMessage extends SimpleDBMessage {
 
     public final int playerId;
+    public final int indexId;
 
-    public GetCharDetailDBMessage(int playerId) {
+    public GetCharDetailDBMessage(int playerId, int indexId) {
         super(DBMessageType.DB_MESSAGE_GET_CHAR_DETAIL);
         this.playerId = playerId;
+        this.indexId = indexId;
     }
 }

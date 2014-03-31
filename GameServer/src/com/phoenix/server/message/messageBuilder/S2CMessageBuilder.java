@@ -39,8 +39,7 @@ public class S2CMessageBuilder {
         for (BriefPlayerInfo playerInfo : playersInfo) {
             BriefPlayerProto.Builder builder2 = BriefPlayerProto.newBuilder();
             builder2.setIndexId(playerInfo.indexId);
-            builder2.setCharId(playerInfo.charId);
-            builder2.setCharIndex(playerInfo.charIndex);
+            builder2.setCharId(playerInfo.charId);            
             builder2.setCharName(playerInfo.charName);
             builder2.setCharGender(playerInfo.charGender);
             builder2.setCharJob(playerInfo.charJob);

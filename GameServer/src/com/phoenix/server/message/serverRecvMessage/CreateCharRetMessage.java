@@ -12,11 +12,11 @@ import com.phoenix.common.message.serverRecvMessage.InternalPlayerMessage;
  */
 public class CreateCharRetMessage extends InternalPlayerMessage {
 
-    public final int result;
+    public final int indexId;
 
-    public CreateCharRetMessage(int playerId, int result) {
+    public CreateCharRetMessage(int playerId, int indexId) {
         super(ServerRecvMessageType.MAP_CREATE_CHAR_RET, playerId);
 
-        this.result = result;
+        this.indexId = indexId;
     }
 }

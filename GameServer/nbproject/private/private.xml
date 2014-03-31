@@ -10,9 +10,10 @@
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/message/dbMessage/SaveCharInfoDBMessage.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/protobuf/InternalCommonProtocol.proto</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/social/BriefPlayerInfos.java</file>
-            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/protobuf/InternalCommonProtocol.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/actor/charInfo/DetailCharInfo.java</file>
+            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/message/messageBuilder/S2CMessageBuilder.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/common/message/dbMessage/DBMessage.java</file>
+            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/common/message/protobufMessage/ProtobufMessageType.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/actor/Human.java</file>
         </group>
     </open-files>

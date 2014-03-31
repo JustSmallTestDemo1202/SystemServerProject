@@ -5,8 +5,8 @@
 package com.phoenix.server.message.serverRecvMessage;
 
 import com.phoenix.common.message.serverRecvMessage.InternalPlayerMessage;
-import com.phoenix.common.message.serverRecvMessage.ServerRecvMessage;
 import com.phoenix.protobuf.ExternalCommonProtocol;
+import com.phoenix.protobuf.ExternalCommonProtocol.CSSelectCharProto;
 
 /**
  *
@@ -16,8 +16,8 @@ public class SelectCharMessage extends InternalPlayerMessage {
 
     public final ExternalCommonProtocol.CSSelectCharProto charInfo;
 
-    public SelectCharMessage(int playerId, ExternalCommonProtocol.CSSelectCharProto charInfo) {
-        super(ServerRecvMessage.ServerRecvMessageType.MAP_SELECT_CHAR, playerId);
+    public SelectCharMessage(int playerId, CSSelectCharProto charInfo) {
+        super(ServerRecvMessageType.MAP_SELECT_CHAR, playerId);
 
         this.charInfo = charInfo;
     }

@@ -32,8 +32,8 @@ public class CreatingCharPlayerState implements PlayerState {
             case MAP_CREATE_CHAR_RET: {
                 CreateCharRetMessage createCharRetMsg = (CreateCharRetMessage) message;
 
-                if (createCharRetMsg.result == 1) {
-                    GameServer.INSTANCE.loadPlayerData(playerId);
+                if (createCharRetMsg.indexId == 1) {
+                    GameServer.INSTANCE.loadPlayerData(playerId, createCharRetMsg.indexId);
                     p.state = UninitPlayerState.INSTANCE;
                 } else {
                     // 通知玩家无法创建角色（重名）

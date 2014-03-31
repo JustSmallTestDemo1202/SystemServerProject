@@ -8,7 +8,7 @@ import com.phoenix.common.message.protobufMessage.ProtobufMessage;
 import com.phoenix.common.messageQueue.DBMessageQueue;
 import com.phoenix.protobuf.ExternalCommonProtocol.SCEnterGameCharProto;
 import com.phoenix.protobuf.InternalCommonProtocol.DBPlayerDetailProto;
-import com.phoenix.server.actor.charInfo.DetailCharInfo;
+import com.phoenix.server.actor.charInfo.CharDetailInfo;
 import com.phoenix.server.message.messageBuilder.DBMessageBuilder;
 import com.phoenix.server.message.messageBuilder.S2CMessageBuilder;
 import com.phoenix.server.player.MapPlayer;
@@ -21,8 +21,7 @@ import com.phoenix.server.timer.HumanUpdateTimer;
  */
 public class Human {
     public final int indexId;           // 玩家角色索引（唯一）
-    public final int charId;            // 玩家id
-    public final int charIndex;         // 玩家id索引
+    public final int charId;            // 玩家id    
     public String charName;             // 玩家名
     public int charJob;                 // 玩家职业
     public int charGender;              // 玩家性别
@@ -40,10 +39,9 @@ public class Human {
         flushTimer.update(difftime);                    // 数据库更新计时器
     }
 
-    public Human(int charId, DetailCharInfo detailCharInfo) {
+    public Human(int charId, CharDetailInfo detailCharInfo) {
         this.indexId = detailCharInfo.indexId;
-        this.charId = detailCharInfo.charId;
-        this.charIndex = detailCharInfo.charIndex;
+        this.charId = detailCharInfo.charId;        
         this.charName = detailCharInfo.charName;
         this.charJob = detailCharInfo.charJob;
         this.charGender = detailCharInfo.charGender;
@@ -51,11 +49,10 @@ public class Human {
         this.charExp = detailCharInfo.charExp;
     }
 
-    public DetailCharInfo buildDetailCharInfo() {
-        DetailCharInfo detailCharInfo = new DetailCharInfo();
+    public CharDetailInfo buildDetailCharInfo() {
+        CharDetailInfo detailCharInfo = new CharDetailInfo();
         detailCharInfo.indexId = this.indexId;
-        detailCharInfo.charId = this.charId;
-        detailCharInfo.charIndex = this.charIndex;
+        detailCharInfo.charId = this.charId;        
         detailCharInfo.charName = this.charName;                // 玩家名
         detailCharInfo.charJob = this.charJob;                  // 玩家职业
         detailCharInfo.charGender = this.charGender;            // 玩家性别
@@ -83,7 +80,7 @@ public class Human {
         // 只有当玩家在线时才需要向数据库同步保存数据
         if (inGame) {
             // 将玩家信息入库
-            DBMessageQueue.queue().offer(DBMessageBuilder.buildSaveCharInfoDBMessage(this.charId, buildDetailCharInfo()));
+            DBMessageQueue.queue().offer(DBMessageBuilder.buildSaveCharInfoDBMessage(this.charId, this.indexId, buildDetailCharInfo()));
         }
     }
 

@@ -11,8 +11,7 @@ USE `gameserver`;
  */
 CREATE TABLE `character` (
     `indexId` INT(11) NOT NULL AUTO_INCREMENT,    
-    `charId` INT(11) NOT NULL,
-    `charIndex` INT(11) NOT NULL,
+    `charId` INT(11) NOT NULL,    
     `charName` VARCHAR(36) NOT NULL,
     `charJob` INT(11) NOT NULL,   
     `charGender` INT(11) NOT NULL,
@@ -51,5 +50,36 @@ DELIMITER $$
         SELECT `indexId`,`charId`,`charIndex`,`charName`,`charGender`,`charJob`,`charLevel`
         FROM `character`
         WHERE `charId`=pCharId;
+    END$$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS `Create_Char`;
+DELIMITER $$
+    CREATE DEFINER=`root`@`localhost` PROCEDURE `Create_Char`(
+        pCharId	 INT(11),       
+        pCharName VARCHAR(36),
+        pCharJob INT(11),
+        pCarGender INT(11)
+    )
+    BEGIN
+        INSERT INTO `character`(`charId`,`charName`,`charJob`,`charGender`) VALUES(pCharId,pCharName,pCharJob,pCarGender);
+        SELECT scope_identity() FROM `character`;
+    END$$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS `Update_Char_Detail_Info`;
+DELIMITER $$
+    CREATE PROCEDURE `Update_Char_Detail_Info`(
+        pIndexId INT(11),
+        pCharId INT(11),
+        pCharLevel INT(11),
+        pCharExp INT(11),
+        pTotalOnlineTime BIGINT(20),   
+        pLeaveTime TIMESTAMP
+    )
+    BEGIN
+        UPDATE `character`
+        SET `charLevel`=pCharLevel, `charExp`=pCharExp, `totalOnlineTime`=pTotalOnlineTime,`leaveTime`=pLeaveTime
+        WHERE `charId`=pCharId and `indexId` = pIndexId;
     END$$
 DELIMITER ;

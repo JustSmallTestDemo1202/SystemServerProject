@@ -332,7 +332,7 @@ public class GameServer implements Runnable {
         humanUpdateTimers.add(new HumanUpdateTimer(human));
     }
     
-    public PlayerContext loadPlayerData(int playerId) {
+    public PlayerContext loadPlayerData(int playerId, int indexId) {
         // 载入玩家数据
         PlayerContext playerContext = playerContexts.get(playerId);
 
@@ -343,7 +343,7 @@ public class GameServer implements Runnable {
 
             playerContexts.put(playerId, playerContext);
             // 通知DB线程加载玩家数据
-            DBMessageQueue.queue().offer(DBMessageBuilder.buildGetCharDetailDBMessage(playerId));
+            DBMessageQueue.queue().offer(DBMessageBuilder.buildGetCharDetailDBMessage(playerId, indexId));
         } else if (playerContext.human != null) {
             System.err.println("load player[" + playerId + "] data fail because already loaded.");
         }
@@ -475,6 +475,10 @@ public class GameServer implements Runnable {
                     } else {
                         System.err.println("Player[" + playerId + "] can't login because channel is closed.");
                     }
+                    break;
+                }
+                case MAP_GET_CHAR_DETAIL_INFO_RET: {
+                    
                     break;
                 }
                 default: {

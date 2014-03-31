@@ -57,8 +57,7 @@ message CSLoginProto {
 }
 
 message CSSelectCharProto {
-    required int32 IndexId = 1;
-    required int32 charindex = 2;
+    required int32 IndexId = 1;    
 }
 
 message CSCreateCharProto {
@@ -69,13 +68,12 @@ message CSCreateCharProto {
 
 message BriefPlayerProto{
     required int32 indexId = 1;             // 角色id（唯一)
-    required int32 charId = 2;              // 玩家id
-    required int32 charIndex = 3;           // 玩家索引号
-    required string charName = 4;           // 玩家名
-    required int32 charJob = 5;             // 玩家职业
-    required int32 charGender = 6;          // 玩家性别
-    required int32 charLevel = 7;           // 玩家等级   
-    optional bool inGame = 8;               
+    required int32 charId = 2;              // 玩家id    
+    required string charName = 3;           // 玩家名
+    required int32 charJob = 4;             // 玩家职业
+    required int32 charGender = 5;          // 玩家性别
+    required int32 charLevel = 6;           // 玩家等级   
+    optional bool inGame = 7;               
 }
 
 message SCCharListProto {
