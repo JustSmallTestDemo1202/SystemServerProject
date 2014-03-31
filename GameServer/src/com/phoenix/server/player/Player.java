@@ -11,7 +11,7 @@ import com.phoenix.common.message.serverRecvMessage.ServerRecvMessage;
  * @author rachel
  */
 public interface Player {
-    public int getId();
+    public int getIndexId();
     public long getLastActiveTime();
     public boolean handleMessage(ServerRecvMessage message);
 }

@@ -27,7 +27,7 @@ public class Login1PlayerState implements PlayerState {
         // 说明：当遇到不该在此状态处理的消息时，说明玩家状态异常，将玩家状态设置为空，
         // 告诉主线程切断玩家连接并清理玩家上下文
         MapPlayer p = (MapPlayer) player;
-        int playerId = p.getId();
+        int playerId = p.getIndexId();
         ServerRecvMessage.ServerRecvMessageType msgType = message.getType();
         switch (msgType) {
             case MAP_CHAR_NUM: {

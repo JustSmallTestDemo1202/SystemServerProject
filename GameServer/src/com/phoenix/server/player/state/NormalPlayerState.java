@@ -23,7 +23,7 @@ public class NormalPlayerState implements PlayerState {
     @Override
     public boolean handleMessage(Player player, ServerRecvMessage message) {
         MapPlayer p = (MapPlayer) player;
-        int playerId = p.getId();
+        int playerId = p.getIndexId();
         Human human = p.human;
 
         ServerRecvMessage.ServerRecvMessageType msgType = message.getType();

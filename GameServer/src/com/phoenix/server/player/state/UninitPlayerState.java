@@ -23,7 +23,7 @@ public class UninitPlayerState implements PlayerState {
     @Override
     public boolean handleMessage(Player player, ServerRecvMessage message) {
         MapPlayer p = (MapPlayer) player;
-        int playerId = p.getId();
+        int playerId = p.getIndexId();
         ServerRecvMessage.ServerRecvMessageType msgType = message.getType();
         switch (msgType) {
             case MAP_GET_CHAR_DETAIL_INFO_RET: {

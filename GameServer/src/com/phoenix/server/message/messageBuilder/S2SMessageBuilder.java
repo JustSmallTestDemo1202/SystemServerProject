@@ -59,7 +59,7 @@ public class S2SMessageBuilder {
         return new SelectCharMessage(playerId, charInfo);
     }
     
-    public static ServerRecvMessage buildGetCharDetailRetMessage(int playerId, CharDetailInfo charDetailInfo) {
-        return new GetCharDetailRetMessage(playerId, charDetailInfo);
+    public static ServerRecvMessage buildGetCharDetailRetMessage(int playerId, int indexId, CharDetailInfo charDetailInfo) {
+        return new GetCharDetailRetMessage(playerId, indexId, charDetailInfo);
     }
 }

@@ -192,7 +192,7 @@ public class ServerDBHandler {
                 Timestamp timestamp = rs.getTimestamp(9);
                 charInfo.leaveTime = (timestamp != null) ? timestamp.getTime() : GameServer.INSTANCE.getCurrentTime();
 
-                ServerRecvMessageQueue.queue().offer(S2SMessageBuilder.buildGetCharDetailRetMessage(charInfo.charId, charInfo));
+                ServerRecvMessageQueue.queue().offer(S2SMessageBuilder.buildGetCharDetailRetMessage(charInfo.charId, charInfo.indexId, charInfo));
             } else {
                System.err.println("Player[" + playerId + "] not found in database.");
             }

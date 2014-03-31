@@ -26,14 +26,14 @@ public class CreatingCharPlayerState implements PlayerState {
     @Override
     public boolean handleMessage(Player player, ServerRecvMessage message) {
         MapPlayer p = (MapPlayer) player;
-        int playerId = p.getId();
+        int playerId = p.getIndexId();
         ServerRecvMessageType msgType = message.getType();
         switch (msgType) {
             case MAP_CREATE_CHAR_RET: {
                 CreateCharRetMessage createCharRetMsg = (CreateCharRetMessage) message;
 
                 if (createCharRetMsg.indexId == 1) {
-                    GameServer.INSTANCE.loadPlayerData(playerId, createCharRetMsg.indexId);
+                    GameServer.INSTANCE.loadPlayerData(playerId, createCharRetMsg.indexId, true);
                     p.state = UninitPlayerState.INSTANCE;
                 } else {
                     // 通知玩家无法创建角色（重名）

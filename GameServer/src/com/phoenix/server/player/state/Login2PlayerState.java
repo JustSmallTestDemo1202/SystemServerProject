@@ -31,7 +31,7 @@ public class Login2PlayerState implements PlayerState {
         // 说明：当遇到不该在此状态处理的消息时，说明玩家状态异常，将玩家状态设置为空，
         // 告诉主线程切断玩家连接并清理玩家上下文
         MapPlayer p = (MapPlayer) player;
-        int playerId = p.getId();
+        int playerId = p.getIndexId();
         ServerRecvMessage.ServerRecvMessageType msgType = message.getType();
         switch (msgType) {
             case MAP_CREATE_CHAR: {
@@ -59,7 +59,7 @@ public class Login2PlayerState implements PlayerState {
                         System.err.println("Player[" + playerId + "] Login2State human.mapPlayer == null error.");
                     }
                 } else { // 玩家数据未关联
-                    GameServer.INSTANCE.loadPlayerData(playerId, selectCharMsg.charInfo.getIndexId());
+                    GameServer.INSTANCE.loadPlayerData(playerId, selectCharMsg.charInfo.getIndexId(), true);
                     p.state = UninitPlayerState.INSTANCE;
                 }
                 return true;

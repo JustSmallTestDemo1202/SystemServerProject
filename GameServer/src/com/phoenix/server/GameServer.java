@@ -20,12 +20,14 @@ import com.phoenix.common.network.pipilineFactory.CommonToServerPipelineFactory;
 import com.phoenix.server.actor.Human;
 import com.phoenix.server.message.messageBuilder.DBMessageBuilder;
 import com.phoenix.server.message.messageBuilder.S2CMessageBuilder;
+import com.phoenix.server.message.serverRecvMessage.GetCharDetailRetMessage;
 import com.phoenix.server.message.serverRecvMessage.LoginMessage;
 import com.phoenix.server.message.serverSendMessage.AddChannelContextNSTMessage;
 import com.phoenix.server.player.MapPlayer;
 import com.phoenix.server.player.Player;
 import com.phoenix.server.player.PlayerContext;
 import com.phoenix.server.player.state.NormalPlayerState;
+import com.phoenix.server.player.state.UninitPlayerState;
 import com.phoenix.server.social.BriefPlayerInfos;
 import com.phoenix.server.timer.HumanUpdateTimer;
 import com.phoenix.utils.CommonUtil;
@@ -89,10 +91,13 @@ public class GameServer implements Runnable {
     
     // 以channelID作为索引玩家ID
     public final ConcurrentHashMap<Integer, Integer> channelID2PlayerIDMap = new ConcurrentHashMap<>();
+    
     // players以playerID为索引记录玩家对象（包括正在登录的玩家和已进入游戏的玩家）
     public final HashMap<Integer, MapPlayer> mapPlayers = new HashMap<>();
-    // playerContexts保存玩家上下文，key为playerId。找不到则创建玩家上下文并异步加载玩家数据
+    
+    // playerContexts保存玩家上下文，key为indexId。找不到则创建玩家上下文并异步加载玩家数据
     public final HashMap<Integer, PlayerContext> playerContexts = new HashMap<>();
+    
     // 玩家定时器
     public final LinkedList<HumanUpdateTimer> humanUpdateTimers = new LinkedList<>();
     // 简略玩家信息表
@@ -332,16 +337,20 @@ public class GameServer implements Runnable {
         humanUpdateTimers.add(new HumanUpdateTimer(human));
     }
     
-    public PlayerContext loadPlayerData(int playerId, int indexId) {
+    public PlayerContext loadPlayerData(int playerId, int indexId, boolean loginUser) {
         // 载入玩家数据
-        PlayerContext playerContext = playerContexts.get(playerId);
+        PlayerContext playerContext = playerContexts.get(indexId);
 
         if (playerContext == null) {
             playerContext = new PlayerContext();
             playerContext.lastVisitTime = getCurrentTime();
-            playerContext.player = mapPlayers.get(playerId);
+            if (loginUser == true) {
+                playerContext.player = mapPlayers.get(playerId);
+            } else {
+                playerContext.player = null;                        
+            }
 
-            playerContexts.put(playerId, playerContext);
+            playerContexts.put(indexId, playerContext);
             // 通知DB线程加载玩家数据
             DBMessageQueue.queue().offer(DBMessageBuilder.buildGetCharDetailDBMessage(playerId, indexId));
         } else if (playerContext.human != null) {
@@ -359,7 +368,7 @@ public class GameServer implements Runnable {
             human.leaveGame();
         }
 
-        PlayerContext playerContext = playerContexts.get(player.getId());
+        PlayerContext playerContext = playerContexts.get(player.getIndexId());
         if (playerContext != null) {
             playerContext.lastVisitTime = getCurrentTime();
             playerContext.player = null;
@@ -403,10 +412,10 @@ public class GameServer implements Runnable {
                     UninitializeChannel uninitializeChannel = uninitializeChannels.remove(channelId);
                     if (uninitializeChannel == null) {
                         // 找到玩家状态机上下文，并让玩家离线
-                        Integer playerId = channelID2PlayerIDMap.remove(channelId);
-                        if (playerId != null) {
+                        Integer indexId = channelID2PlayerIDMap.remove(channelId);
+                        if (indexId != null) {
                             // 注意：players.remove只此一处，因此可以在此处实现重复登陆可以在踢出前一登陆后进入游戏的逻辑
-                            MapPlayer mapPlayer = mapPlayers.remove(playerId);
+                            MapPlayer mapPlayer = mapPlayers.remove(indexId);
                             if (mapPlayer != null) {
                                 removePlayer(mapPlayer);
 
@@ -448,7 +457,8 @@ public class GameServer implements Runnable {
                             // 创建Player上下文
                             // 已经将Player初始化为Login1State
                             mapPlayer = new MapPlayer(playerId, loginMsg.passport, loginMsg.auth, loginMsg.privilege, loginMsg.endForbidTalkTime, clientChannel);
-
+                            
+                            /*
                             PlayerContext playerContext = playerContexts.get(playerId);
                             if (playerContext != null) {
                                 assert (playerContext.player == null);
@@ -461,6 +471,8 @@ public class GameServer implements Runnable {
 
                                 playerContext.player = mapPlayer;
                             }
+                            */
+                            
                             mapPlayers.put(playerId, mapPlayer);
                             channelID2PlayerIDMap.put(channelId, playerId);
 
@@ -478,7 +490,38 @@ public class GameServer implements Runnable {
                     break;
                 }
                 case MAP_GET_CHAR_DETAIL_INFO_RET: {
-                    
+                    GetCharDetailRetMessage getCharDetailRetMessage = (GetCharDetailRetMessage) msg;
+
+                    PlayerContext playerContext = playerContexts.get(getCharDetailRetMessage.indexId);
+                    if (playerContext != null) {
+                        if (playerContext.human == null) {
+                            playerContext.lastVisitTime = getCurrentTime();
+                            Human human = new Human(getCharDetailRetMessage.playerId, getCharDetailRetMessage.charDetailInfo);
+
+                            playerContext.human = human;
+
+                            if (playerContext.player != null) {
+                                assert (playerContext.player.human == null);
+                                human.mapPlayer = playerContext.player;
+                                playerContext.player.human = human;
+                                if (playerContext.player.state == UninitPlayerState.INSTANCE) {
+                                    playerContext.player.handleMessage(msg);
+                                }
+                            }
+
+                            // 将等待该角色信息加载的竞技消息重新加到消息队列
+                            if (playerContext.waitingMessages != null) {
+                                for (ServerRecvMessage message : playerContext.waitingMessages) {
+                                    ServerRecvMessageQueue.queue().offer(message);
+                                }
+                                playerContext.waitingMessages = null;
+                            }
+                        } else {
+                            System.out.println("Human object has already existed when get char detail return.");
+                        }
+                    } else {
+                        System.err.println("Can't get player context when get char detail return.");
+                    }
                     break;
                 }
                 default: {
