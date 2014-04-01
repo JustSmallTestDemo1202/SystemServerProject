@@ -3,36 +3,48 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
+            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/social/BriefPlayerInfos.java</file>
+            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/common/network/ClientConnectHandler.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/player/state/UninitPlayerState.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/player/state/PlayerState.java</file>
+            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/common/network/pipilineFactory/Type4BytesLengthFieldProtobufEncoder.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/actor/charInfo/CharDetailInfo.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/actor/Human.java</file>
+            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/timer/HumanUpdateTimer.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/GameServer.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/player/state/Login2PlayerState.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/player/state/NormalPlayerState.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/message/serverRecvMessage/CreateCharRetMessage.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/message/dbMessage/SaveCharInfoDBMessage.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/dbHandler/ServerDBHandler.java</file>
+            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/common/network/listenerServer/ClientConnectServer.java</file>
+            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/common/network/ServerSendThreadHandler.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/message/serverRecvMessage/GetCharDetailRetMessage.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/message/dbMessage/GetCharDetailDBMessage.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/player/PlayerContext.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/common/message/dbMessage/DBMessage.java</file>
+            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/timer/FlushDataTimer.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/common/network/channel/ChannelContext.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/message/messageBuilder/DBMessageBuilder.java</file>
+            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/social/BriefPlayerInfo.java</file>
+            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/utils/Consts.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/player/state/CreatingCharPlayerState.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/message/serverRecvMessage/LoginMessage.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/message/serverRecvMessage/SelectCharMessage.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/common/message/protobufMessage/ProtobufMessageType.java</file>
+            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/common/network/listenerServer/AbstractServer.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/protobuf/ExternalCommonProtocol.proto</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/player/MapPlayer.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/player/AbstractPlayer.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/common/database/DBThreadHandler.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/player/state/Login1PlayerState.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/database/dbcreate.sql</file>
+            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/common/network/channel/UninitializeChannel.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/message/dbMessage/GetCharNumDBMessage.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/message/messageBuilder/S2CMessageBuilder.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/message/messageBuilder/S2SMessageBuilder.java</file>
             <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/server/message/dbMessage/CreateCharDBMessage.java</file>
+            <file>file:/E:/SystemServerProject/GameServer/src/com/phoenix/common/network/pipilineFactory/CommonToServerPipelineFactory.java</file>
         </group>
     </open-files>
 </project-private>

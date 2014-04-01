@@ -13,6 +13,7 @@
             <file>file:/E:/SystemServerProject/Robot/src/com/icee/myth/network/builder/MessageBuilder.java</file>
             <file>file:/E:/SystemServerProject/Robot/src/com/icee/myth/client/Client.java</file>
             <file>file:/E:/SystemServerProject/Robot/src/com/icee/myth/network/protobufmessage/ProtobufMessageType.java</file>
+            <file>jar:file:/E:/SystemServerProject/Robot/lib/netty-3.6.6.Final-sources.jar!/org/jboss/netty/bootstrap/ClientBootstrap.java</file>
         </group>
     </open-files>
 </project-private>

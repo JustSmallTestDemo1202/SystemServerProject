@@ -59,8 +59,8 @@ public class ServerDBHandler {
 
                 if (rs.next()) {
                     BriefPlayerInfo playerInfo = new BriefPlayerInfo(
-                            rs.getInt(1), rs.getInt(2), rs.getString(4),
-                            rs.getInt(5), rs.getInt(6), rs.getInt(7));
+                            rs.getInt(1), rs.getInt(2), rs.getString(3),
+                            rs.getInt(4), rs.getInt(5), rs.getInt(6));
                     playerDetail.add(playerInfo);
                 }
             }

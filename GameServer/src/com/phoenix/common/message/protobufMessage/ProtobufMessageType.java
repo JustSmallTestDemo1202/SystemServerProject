@@ -24,6 +24,6 @@ public class ProtobufMessageType {
     public static final int S2C_LOGIN_ERROR = 11;           // 登录失败
     public static final int S2C_NO_CHAR_RET = 12;           // 未创建角色
     public static final int S2C_CHAR_LIST = 13;             // 已创建角色列表
-    public static final int S2C_CREATE_CHAR_ERROR = 13;     // 创建角色失败
-    public static final int S2C_ENTER_GAME_RET = 14;        // 进入游戏
+    public static final int S2C_CREATE_CHAR_ERROR = 14;     // 创建角色失败
+    public static final int S2C_ENTER_GAME_RET = 15;        // 进入游戏
 }
