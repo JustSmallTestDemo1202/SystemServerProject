@@ -27,7 +27,7 @@ public class UsrPasswordJsonRet {
 
     public static UsrPasswordJsonRet CheckAccount(int passport) {
         //String url = "http://" + MiscConfig.INSTANCE.managerIp + ":" + MiscConfig.INSTANCE.managerPort + "/session/get";
-        String url = "http://127.0.0.1:8081/session/get";
+        String url = "http://127.0.0.1:8083/session/get";
         HttpURLConnection con = null;
         BufferedReader in = null;
         UsrPasswordJsonRet retData = new UsrPasswordJsonRet();

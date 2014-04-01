@@ -59,7 +59,7 @@ public class ServerDBHandler {
 
                 if (rs.next()) {
                     BriefPlayerInfo playerInfo = new BriefPlayerInfo(
-                            rs.getInt(1), rs.getInt(2), rs.getInt(3), rs.getString(4),
+                            rs.getInt(1), rs.getInt(2), rs.getString(4),
                             rs.getInt(5), rs.getInt(6), rs.getInt(7));
                     playerDetail.add(playerInfo);
                 }
@@ -106,7 +106,7 @@ public class ServerDBHandler {
         CallableStatement stmt = null;
         ResultSet rs = null;
         try {
-            stmt = connection.prepareCall("{call Create_Char(?,?,?)}");
+            stmt = connection.prepareCall("{call Create_Char(?,?,?,?)}");
             stmt.setInt(1, playerId);                           // charId            
             stmt.setString(2, createCharInfo.getCharName());    // charName
             stmt.setInt(3, createCharInfo.getCharJob());        // charJob
@@ -162,7 +162,7 @@ public class ServerDBHandler {
         CallableStatement stmt = null;
         ResultSet rs = null;
         try {
-            stmt = connection.prepareCall("{call Get_Char_Detail(?)}");
+            stmt = connection.prepareCall("{call Get_Char_Detail(?,?)}");
             stmt.setInt(1, indexId);
             stmt.setInt(2, playerId);
             rs = stmt.executeQuery();
@@ -175,7 +175,7 @@ public class ServerDBHandler {
                 charInfo.charJob = rs.getInt(4);
                 charInfo.charGender = rs.getInt(5);
                 charInfo.charLevel = rs.getInt(6);                
-
+                /*
                 Blob charDetailBlob = rs.getBlob(7);
                 if (charDetailBlob != null) {
                     try {
@@ -191,7 +191,7 @@ public class ServerDBHandler {
 
                 Timestamp timestamp = rs.getTimestamp(9);
                 charInfo.leaveTime = (timestamp != null) ? timestamp.getTime() : GameServer.INSTANCE.getCurrentTime();
-
+                */
                 ServerRecvMessageQueue.queue().offer(S2SMessageBuilder.buildGetCharDetailRetMessage(charInfo.charId, charInfo.indexId, charInfo));
             } else {
                System.err.println("Player[" + playerId + "] not found in database.");
@@ -237,7 +237,7 @@ public class ServerDBHandler {
         
         CallableStatement stmt = null;
         try {
-            stmt = connection.prepareCall("{call Update_Char_Detail_Info(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}");
+            stmt = connection.prepareCall("{call Update_Char_Detail_Info(?,?,?,?,?,?)}");
             stmt.setInt(1, indexId);
             stmt.setInt(2, playerId);
             stmt.setInt(3, info.charLevel);

@@ -82,12 +82,13 @@ message SCCharListProto {
 
 
 message SCEnterGameCharProto {
-    required int32 charId = 1;                  // id
-    required string charName = 2;               // 名字    
-    required int32 charJob = 3;                 // 玩家职业
-    required int32 charGender = 4;              // 玩家性别
-    required int32 charLevel = 5;               // 玩家等级 
-    required int32 charExp = 6;                 // 玩家经验
+    required int32 indexId = 1;
+    required int32 charId = 2;                  // id
+    required string charName = 3;               // 名字    
+    required int32 charJob = 4;                 // 玩家职业
+    required int32 charGender = 5;              // 玩家性别
+    required int32 charLevel = 6;               // 玩家等级 
+    required int32 charExp = 7;                 // 玩家经验
 }
 
 message SCEnterGameRetProto {

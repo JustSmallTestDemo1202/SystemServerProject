@@ -535,8 +535,9 @@ public class GameServer implements Runnable {
                         System.err.println("Can't find player[" + playerId + "] to handle message[" + msg.getType() + "].");
                     }
                     break;
-                }
+                }                
             }
+            msg = messageQueue.poll();
         }
     }    
     

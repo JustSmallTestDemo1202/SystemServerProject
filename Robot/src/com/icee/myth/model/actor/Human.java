@@ -4,12 +4,8 @@
  */
 package com.icee.myth.model.actor;
 
-import com.icee.myth.action.ContinueStageAction;
-import com.icee.myth.action.EnterStageAction;
-import com.icee.myth.action.GMAddEmergyAction;
+
 import com.icee.myth.action.IAction;
-import com.icee.myth.action.LeaveStageAction;
-import com.icee.myth.action.StartPVEBattleAction;
 import com.icee.myth.config.MiscConfig;
 import com.icee.myth.login.UsrPasswordJsonRet;
 import com.icee.myth.network.builder.MessageBuilder;
@@ -17,8 +13,8 @@ import com.icee.myth.network.encoder.Type2BytesLengthFieldProtobufEncoder;
 import com.icee.myth.network.handler.ClientHandler;
 import com.icee.myth.network.protobufmessage.ProtobufMessage;
 import com.icee.myth.network.upstream.NetReceiver;
-import com.icee.myth.protobuf.ExternalCommonProtocol.EnterGameCharProto;
 import com.icee.myth.utils.RandomGenerator;
+import com.phoenix.protobuf.ExternalCommonProtocol.SCEnterGameCharProto;
 import java.net.InetSocketAddress;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -90,7 +86,7 @@ public class Human {
         if (ret != null && ret.result == 0){
             String sessionID = ret.sessionid;
             ChannelFuture connectFuture = null;
-            connectFuture = bootstrap.connect(new InetSocketAddress(ret.serverip, ret.serverport));
+            connectFuture = bootstrap.connect(new InetSocketAddress("192.168.1.192", 8001));
             channel = connectFuture.awaitUninterruptibly().getChannel();
             try {
                 // send login request
@@ -135,7 +131,7 @@ public class Human {
 
     public void resetPlayerAction(long curTime){
         this.actions.clear();
-        
+        /*
         // 如果没有体力了,体力全部补充到上限
         if (this.energy <= 10){
             actions.add(new GMAddEmergyAction(this));
@@ -171,6 +167,7 @@ public class Human {
             nextActionIndex++;
             nextActionIndex = nextActionIndex % 5;
         }
+                */
     }
 
     private void handleMessage() {
@@ -181,11 +178,12 @@ public class Human {
        
     }
 
-    public void init(EnterGameCharProto enterGameCharProto) {
-        this.id = enterGameCharProto.getCid();                  // 玩家id
-        this.name = enterGameCharProto.getName();               // 玩家名字
-        this.lv = enterGameCharProto.getLv();                   // 玩家等级
-        this.exp = enterGameCharProto.getExp();                 // 玩家经验
+    public void init(SCEnterGameCharProto enterGameCharProto) {
+        this.id = enterGameCharProto.getCharId();                  // 玩家id
+        this.name = enterGameCharProto.getCharName();               // 玩家名字
+        this.lv = enterGameCharProto.getCharLevel();                   // 玩家等级
+        this.exp = enterGameCharProto.getCharExp();                 // 玩家经验
+        /*
         this.rankLv = enterGameCharProto.getRankLv();           // 玩家军衔等级
         this.rankExp = enterGameCharProto.getRankExp();         // 玩家军衔经验（功勋）
         this.gold1 = enterGameCharProto.getGold1();             // 黄金（充值）
@@ -208,6 +206,7 @@ public class Human {
         } else {
             this.nextActionIndex = 0;
         }
+        */
 
          this.inGame = true;                                     //玩家已经进入游戏
     }

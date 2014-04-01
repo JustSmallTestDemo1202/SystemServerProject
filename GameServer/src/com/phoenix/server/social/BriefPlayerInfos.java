@@ -49,11 +49,11 @@ public class BriefPlayerInfos {
         }
     }
 
-    public void addBriefPlayerInfo(int indexId, int charId, int charIndex, String charName, int charJob, int charGender, int charLevel, boolean inGame) {
+    public void addBriefPlayerInfo(int indexId, int charId, String charName, int charJob, int charGender, int charLevel, boolean inGame) {
         BriefPlayerInfo briefPlayerInfo = playerId2InfoMap.get(charId);
 
         if (briefPlayerInfo == null) {
-            briefPlayerInfo = new BriefPlayerInfo(indexId, charId, charIndex, charName, charJob, charGender, charLevel);
+            briefPlayerInfo = new BriefPlayerInfo(indexId, charId, charName, charJob, charGender, charLevel);
             briefPlayerInfo.inGame = inGame;
             briefPlayerInfo.lastVisitTime = GameServer.INSTANCE.getCurrentTime();
 

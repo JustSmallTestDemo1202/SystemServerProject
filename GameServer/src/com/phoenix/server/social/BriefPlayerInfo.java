@@ -10,8 +10,7 @@ package com.phoenix.server.social;
  */
 public class BriefPlayerInfo {
     public int indexId;             // 角色id（唯一)
-    public int charId;              // 玩家id
-    public int charIndex;           // 玩家索引号
+    public int charId;              // 玩家id    
     public String charName;         // 玩家名
     public int charJob;             // 玩家职业
     public int charGender;          // 玩家性别
@@ -19,10 +18,9 @@ public class BriefPlayerInfo {
     public boolean inGame;      // 在线标志（也用于判断是否可清理出内存）（玩家上线时设为true，离线时设为false）
     public long lastVisitTime;  // 最近访问时间
     
-    public BriefPlayerInfo(int indexId, int charId, int charIndex, String charName, int charJob, int charGender, int charLevel){
+    public BriefPlayerInfo(int indexId, int charId, String charName, int charJob, int charGender, int charLevel){
         this.indexId = indexId;
-        this.charId = charId;
-        this.charIndex = charIndex;
+        this.charId = charId;        
         this.charName = charName;
         this.charJob = charJob;
         this.charGender = charGender;

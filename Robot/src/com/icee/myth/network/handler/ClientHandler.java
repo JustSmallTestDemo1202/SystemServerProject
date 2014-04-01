@@ -7,8 +7,7 @@ package com.icee.myth.network.handler;
 import com.icee.myth.model.actor.Human;
 import com.icee.myth.network.message.Message;
 import com.icee.myth.network.protobufmessage.ProtobufMessageType;
-import com.icee.myth.protobuf.ExternalCommonProtocol.EnterGameRetProto;
-import com.icee.myth.protobuf.ExternalCommonProtocol.IntValueProto;
+import com.phoenix.protobuf.ExternalCommonProtocol.SCEnterGameRetProto;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -48,27 +47,21 @@ public class ClientHandler extends SimpleChannelUpstreamHandler {
             int length = cb.readInt();
 
             switch (type) {
-                case ProtobufMessageType.S2C_NOCHARRET:{
+                case ProtobufMessageType.S2C_NO_CHAR_RET:{
                     human.receiver.messageQueue.add(new Message(type, null));
                     break;
                 }
 
-                case ProtobufMessageType.S2C_CREATECHARERROR: {
+                case ProtobufMessageType.S2C_CREATE_CHAR_ERROR: {
                     System.out.println("S2C_CREATECHARERROR");
                     break;
                 }
 
-                case ProtobufMessageType.S2C_ENTERGAMERET:{
-                    EnterGameRetProto enterGameRetProto = EnterGameRetProto.getDefaultInstance().newBuilderForType().mergeFrom(new ChannelBufferInputStream(cb)).build();
+                case ProtobufMessageType.S2C_ENTER_GAME_RET:{
+                    SCEnterGameRetProto enterGameRetProto = SCEnterGameRetProto.getDefaultInstance().newBuilderForType().mergeFrom(new ChannelBufferInputStream(cb)).build();
                     human.receiver.messageQueue.add(new Message(type, enterGameRetProto));
                     break;
-                }
-
-                case ProtobufMessageType.S2C_ENERGY_CHANGE:{
-                    IntValueProto energyProto = IntValueProto.getDefaultInstance().newBuilderForType().mergeFrom(new ChannelBufferInputStream(cb)).build();
-                    human.receiver.messageQueue.add(new Message(type, energyProto));
-                    break;
-                }
+                }                
             }
         } catch (Exception ex) {
             ex.printStackTrace();

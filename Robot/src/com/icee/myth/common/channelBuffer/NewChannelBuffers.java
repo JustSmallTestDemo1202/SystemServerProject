@@ -74,7 +74,7 @@ public class NewChannelBuffers {
         case 1:
             return components.get(0);
         default:
-            return new CompositeChannelBuffer(endianness, components);
+            return new CompositeChannelBuffer(endianness, components, true);
         }
     }
 

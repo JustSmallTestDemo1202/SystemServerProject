@@ -72,7 +72,13 @@ public class Human {
 
     public SCEnterGameCharProto buildSCEnterGameCharProto() {
         SCEnterGameCharProto.Builder builder1 = SCEnterGameCharProto.newBuilder();
-
+        builder1.setIndexId(indexId);
+        builder1.setCharId(charId);
+        builder1.setCharName(charName);
+        builder1.setCharJob(charJob);
+        builder1.setCharGender(charGender);
+        builder1.setCharLevel(charLevel);
+        builder1.setCharExp(charExp);
         return builder1.build();
     }
 
@@ -85,8 +91,12 @@ public class Human {
     }
 
     public void enterGame() {
-        // 返回进入游戏角色信息给客户端
+        // 返回进入游戏角色信息给客户端        
+        updateTimer = new HumanUpdateTimer(this);
+        
         sendMessage(S2CMessageBuilder.buildEnterGameRet(buildSCEnterGameCharProto()));
+        
+        flushTimer = new FlushDataTimer(mapPlayer);
     }
 
     public void leaveGame() {

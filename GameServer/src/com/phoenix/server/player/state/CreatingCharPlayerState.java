@@ -32,7 +32,7 @@ public class CreatingCharPlayerState implements PlayerState {
             case MAP_CREATE_CHAR_RET: {
                 CreateCharRetMessage createCharRetMsg = (CreateCharRetMessage) message;
 
-                if (createCharRetMsg.indexId == 1) {
+                if (createCharRetMsg.indexId != -1) {
                     GameServer.INSTANCE.loadPlayerData(playerId, createCharRetMsg.indexId, true);
                     p.state = UninitPlayerState.INSTANCE;
                 } else {

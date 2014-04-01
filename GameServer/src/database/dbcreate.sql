@@ -63,7 +63,20 @@ DELIMITER $$
     )
     BEGIN
         INSERT INTO `character`(`charId`,`charName`,`charJob`,`charGender`) VALUES(pCharId,pCharName,pCharJob,pCarGender);
-        SELECT scope_identity() FROM `character`;
+        SELECT LAST_INSERT_ID();
+    END$$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS `Get_Char_Detail`;
+DELIMITER $$
+    CREATE PROCEDURE `Get_Char_Detail`(        
+        pIndexId INT(11),
+        pCharId	INT(11)
+    )
+    BEGIN
+        SELECT `indexId`,`charId`,`charName`,`charJob`,`charGender`,`charLevel`
+        FROM `character`
+        WHERE `charId`=pCharId AND `indexId`=pIndexId;
     END$$
 DELIMITER ;
 

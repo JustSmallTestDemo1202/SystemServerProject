@@ -1,6 +1,6 @@
 {
 	"managerIp":"127.0.0.1",
-	"managerPort":8081,
+	"managerPort":8083,
 	"serverId":1,	
 	"robotStart":20000,
 	"robotEnd":20001,
