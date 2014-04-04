@@ -10,8 +10,11 @@ package com.phoenix.utils;
  */
 public class Consts {
 
-     // 线程池线程数 - 用于处理战斗计算、充值、激活码的事务
+     // 线程池线程数 - 用于处理充值、激活码的事务
     public static final int THREAD_SERVER_THREAD_NUM = 8;  
+    
+    // 线程池线程数 - 用于处理战斗计算的事务
+    public static final int THREAD_BATTLE_THREAD_NUM = 8;  
     
     // 数据库相关
     public static final int DB_KEEPALIVE_INTERVAL = 3600000;                // 3600000ms,保证数据库连接不中断

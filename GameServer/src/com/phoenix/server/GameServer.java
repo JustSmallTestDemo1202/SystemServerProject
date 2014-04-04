@@ -5,10 +5,12 @@
 package com.phoenix.server;
 
 import com.phoenix.common.database.DBThreadHandler;
+import com.phoenix.common.message.battleMessage.BattleMessage;
 import com.phoenix.common.message.protobufMessage.ProtobufMessage;
 import com.phoenix.common.message.serverRecvMessage.ExternalPlayerMessage;
 import com.phoenix.common.message.serverRecvMessage.InternalPlayerMessage;
 import com.phoenix.common.message.serverRecvMessage.ServerRecvMessage;
+import com.phoenix.common.messageQueue.BattleMessageQueueList;
 import com.phoenix.common.messageQueue.DBMessageQueue;
 import com.phoenix.common.messageQueue.ServerRecvMessageQueue;
 import com.phoenix.common.messageQueue.ServerSendMessageQueue;
@@ -18,6 +20,7 @@ import com.phoenix.common.network.channel.UninitializeChannel;
 import com.phoenix.common.network.listenerServer.ClientConnectServer;
 import com.phoenix.common.network.pipilineFactory.CommonToServerPipelineFactory;
 import com.phoenix.server.actor.Human;
+import com.phoenix.server.battleHandler.BattleThreadHandler;
 import com.phoenix.server.message.messageBuilder.DBMessageBuilder;
 import com.phoenix.server.message.messageBuilder.S2CMessageBuilder;
 import com.phoenix.server.message.serverRecvMessage.GetCharDetailRetMessage;
@@ -62,7 +65,8 @@ public class GameServer implements Runnable {
     private final LinkedTransferQueue<ServerRecvMessage> messageQueue = ServerRecvMessageQueue.queue();
     // uninitializeChannel保存刚建立连接但未开始交换玩家帐号信息的channel，key为channel id
     private final HashMap<Integer, UninitializeChannel> uninitializeChannels = new HashMap<>();
-   
+    // 战斗线程的消息队列
+    private final List<LinkedTransferQueue<BattleMessage>> battleMessageQueueList = BattleMessageQueueList.queueList();
     public int serverId;                // 服务器id
     private int port;                   // Map Server监听的端口
     private String internalHost;        // 内网网卡ip
@@ -79,6 +83,10 @@ public class GameServer implements Runnable {
     // 数据库线程
     private DBThreadHandler mapDBThreadHandle;
     private Thread dbThread;
+    
+    // 战斗线程
+    private BattleThreadHandler[] mapBattleThreadHandlers;
+    private Thread[] battleThreads;
     
     // 网络发包线程
     private ServerSendThreadHandler serverSendThreadHandle;
@@ -287,6 +295,17 @@ public class GameServer implements Runnable {
         this.dbThread = new Thread(mapDBThreadHandle, "DBThread");
         this.dbThread.start();
 
+        // 启动战斗处理线程
+        this.mapBattleThreadHandlers = new BattleThreadHandler[Consts.THREAD_BATTLE_THREAD_NUM];
+        this.battleThreads = new Thread[Consts.THREAD_BATTLE_THREAD_NUM];
+        
+        for (int i = 0; i < Consts.THREAD_BATTLE_THREAD_NUM; i++) {
+            battleMessageQueueList.add(new LinkedTransferQueue<BattleMessage>());
+            this.mapBattleThreadHandlers[i] = new BattleThreadHandler(i);
+            this.battleThreads[i] = new Thread(mapBattleThreadHandlers[i], "BattleThread" + i);
+            this.battleThreads[i].start();
+        }
+        
         // 启动发包线程
         this.serverSendThreadHandle = new ServerSendThreadHandler();
         this.serverSendThread = new Thread(this.serverSendThreadHandle, "ServerSendThread");
@@ -307,6 +326,8 @@ public class GameServer implements Runnable {
         // 启动主线程
         new Thread(this, "GameServerThread").start();
     }
+    
+    
     
     // 全服广播
     public void broadcast(ProtobufMessage message) {
