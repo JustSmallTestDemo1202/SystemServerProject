@@ -19,8 +19,11 @@ public class HumanUpdateTimer implements MTimer {
     }
 
     @Override
-    public boolean update(int difftime) {        
-        this.human.update(difftime);
-        return true;        
+    public boolean update(int difftime) {
+        if (this.human.inGame == true) {
+            this.human.update(difftime);
+            return true;
+        }
+        return false;
     }
 }

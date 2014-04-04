@@ -62,9 +62,11 @@ public class GameServer implements Runnable {
 
     public static final GameServer INSTANCE = new GameServer();
     // 全局共享的消息队列
-    private final LinkedTransferQueue<ServerRecvMessage> messageQueue = ServerRecvMessageQueue.queue();
+    private final LinkedTransferQueue<ServerRecvMessage> messageQueue = ServerRecvMessageQueue.queue();    
     // uninitializeChannel保存刚建立连接但未开始交换玩家帐号信息的channel，key为channel id
-    private final HashMap<Integer, UninitializeChannel> uninitializeChannels = new HashMap<>();
+    private final HashMap<Integer, UninitializeChannel> uninitializeChannels = new HashMap<>(); 
+    // battlePlayerInfos记录战斗过程中玩家所在战斗线程
+    private final HashMap<Integer, Integer> battlePlayerInfos = new HashMap<>();    
     // 战斗线程的消息队列
     private final List<LinkedTransferQueue<BattleMessage>> battleMessageQueueList = BattleMessageQueueList.queueList();
     public int serverId;                // 服务器id
@@ -87,6 +89,7 @@ public class GameServer implements Runnable {
     // 战斗线程
     private BattleThreadHandler[] mapBattleThreadHandlers;
     private Thread[] battleThreads;
+    private int[] battleThreadPlayerNum;            // 战斗线程当前人数
     
     // 网络发包线程
     private ServerSendThreadHandler serverSendThreadHandle;
@@ -298,9 +301,10 @@ public class GameServer implements Runnable {
         // 启动战斗处理线程
         this.mapBattleThreadHandlers = new BattleThreadHandler[Consts.THREAD_BATTLE_THREAD_NUM];
         this.battleThreads = new Thread[Consts.THREAD_BATTLE_THREAD_NUM];
-        
-        for (int i = 0; i < Consts.THREAD_BATTLE_THREAD_NUM; i++) {
-            battleMessageQueueList.add(new LinkedTransferQueue<BattleMessage>());
+        this.battleThreadPlayerNum = new int[Consts.THREAD_BATTLE_THREAD_NUM];
+        for (int i = 0; i < Consts.THREAD_BATTLE_THREAD_NUM; i++) {            
+            this.battleMessageQueueList.add(new LinkedTransferQueue<BattleMessage>());
+            this.battleThreadPlayerNum[i] = 0;
             this.mapBattleThreadHandlers[i] = new BattleThreadHandler(i);
             this.battleThreads[i] = new Thread(mapBattleThreadHandlers[i], "BattleThread" + i);
             this.battleThreads[i].start();
@@ -386,7 +390,7 @@ public class GameServer implements Runnable {
 
         Human human = player.human;
         if (human != null) {
-            human.leaveGame();
+            human.leaveGame();           
         }
 
         PlayerContext playerContext = playerContexts.get(player.getIndexId());
@@ -599,6 +603,7 @@ public class GameServer implements Runnable {
     private void updateHumans(int difftime) {
         for (Iterator<HumanUpdateTimer> iterator = humanUpdateTimers.iterator(); iterator.hasNext();) {
             HumanUpdateTimer humanUpdateTimer = iterator.next();
+            // 当玩家下线后，该update被移除
             if (!humanUpdateTimer.update(difftime)) {
                 iterator.remove();
             }

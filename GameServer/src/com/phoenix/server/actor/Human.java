@@ -8,6 +8,7 @@ import com.phoenix.common.message.protobufMessage.ProtobufMessage;
 import com.phoenix.common.messageQueue.DBMessageQueue;
 import com.phoenix.protobuf.ExternalCommonProtocol.SCEnterGameCharProto;
 import com.phoenix.protobuf.InternalCommonProtocol.DBPlayerDetailProto;
+import com.phoenix.server.GameServer;
 import com.phoenix.server.actor.charInfo.CharDetailInfo;
 import com.phoenix.server.message.messageBuilder.DBMessageBuilder;
 import com.phoenix.server.message.messageBuilder.S2CMessageBuilder;
@@ -31,10 +32,16 @@ public class Human {
     public MapPlayer mapPlayer;                         // Human角色对应的网络实体
 
     private FlushDataTimer flushTimer;                  // 数据库刷新计时器
-    public HumanUpdateTimer updateTimer = null;         // 角色场景刷新定时器
+    //public HumanUpdateTimer updateTimer = null;       // 角色场景刷新定时器
 
     public boolean inGame = false;                      // 角色是否在游戏中
-
+    
+    public int ip;                      // 玩家登陆ip
+    public long enterTime;              // 最近一次登陆游戏时间
+    public long leaveTime;              // 最后一次离开游戏时间
+    public long totalOnlineTime;        // 累计游戏时间
+    
+    
     public void update(int difftime) {
         flushTimer.update(difftime);                    // 数据库更新计时器
     }
@@ -47,6 +54,9 @@ public class Human {
         this.charGender = detailCharInfo.charGender;
         this.charLevel = detailCharInfo.charLevel;
         this.charExp = detailCharInfo.charExp;
+        
+        this.leaveTime = detailCharInfo.leaveTime;
+        this.totalOnlineTime = detailCharInfo.totalOnlineTime;
     }
 
     public CharDetailInfo buildDetailCharInfo() {
@@ -66,7 +76,7 @@ public class Human {
     // 数据库玩家信息
     public DBPlayerDetailProto buildDBPlayerDetailProto() {
         DBPlayerDetailProto.Builder builder1 = DBPlayerDetailProto.newBuilder();
-
+        
         return builder1.build();
     }
 
@@ -89,17 +99,45 @@ public class Human {
             DBMessageQueue.queue().offer(DBMessageBuilder.buildSaveCharInfoDBMessage(this.charId, this.indexId, buildDetailCharInfo()));
         }
     }
+    
+    /**
+     * 与离线上线时间差相关的刷新
+     */
+    public void timeRefresh() {
+        
+    }
 
     public void enterGame() {
         // 返回进入游戏角色信息给客户端        
-        updateTimer = new HumanUpdateTimer(this);
+        //updateTimer = new HumanUpdateTimer(this);
+        
+        enterTime = GameServer.INSTANCE.getCurrentTime();
+        timeRefresh();
         
         sendMessage(S2CMessageBuilder.buildEnterGameRet(buildSCEnterGameCharProto()));
+        
+        inGame = true;
+        ip = mapPlayer.channelContext.getRemoteIP();
         
         flushTimer = new FlushDataTimer(mapPlayer);
     }
 
     public void leaveGame() {
+         if (inGame) {
+            leaveTime = GameServer.INSTANCE.getCurrentTime();
+            totalOnlineTime += leaveTime - enterTime;
+            mapPlayer = null;
+
+            // 玩家数据入库
+            flushData();
+
+            inGame = false;
+
+            // 修改简略玩家信息的上线标志
+            GameServer.INSTANCE.briefPlayerInfos.setOffGame(charId);            
+        } else {
+            System.err.println("Player[" + charId + "] multi-logout!");
+        }
     }
 
     public void sendMessage(ProtobufMessage message) {
