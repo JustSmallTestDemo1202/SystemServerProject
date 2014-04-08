@@ -24,10 +24,18 @@ public class Human {
     public final int indexId;           // 玩家角色索引（唯一）
     public final int charId;            // 玩家id    
     public String charName;             // 玩家名
+    
     public int charJob;                 // 玩家职业
     public int charGender;              // 玩家性别
+    
     public int charLevel;               // 玩家等级 
     public int charExp;                 // 玩家经验
+    
+    public int charGold;                // 玩家金钱
+    public int charDiamond;             // 玩家钻石
+    
+    public int charEnergy;              // 玩家体力
+    
 
     public MapPlayer mapPlayer;                         // Human角色对应的网络实体
 
